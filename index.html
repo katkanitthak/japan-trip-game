@@ -3,12 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.3)</title>
-<!-- 004-arcade-stage · v0.3 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
+<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.4)</title>
+<!-- 004-arcade-stage · v0.4 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
      โครงมาจาก mockup 002 (สมุดแท็บรายวัน) + ชุดเกม: HUD ยศ/XP · ปุ่มอาร์เคดขอบหนา · แมวนำทาง "น้องเฉาก๊วย"
-     v0.3: ข้อมูล sync v4.1 (ตาราง start–end + ระยะเดินทาง · มื้อยังไม่ได้จอง · กิโมโน D10 · บัส 14:30-16:05)
-           + รหัสจองย้ายเข้า "ห้องนิรภัย" — เข้ารหัส AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
-           รหัสจองไม่มีอยู่ในไฟล์แบบข้อความล้วน — ปลอดภัยเมื่อโฮสต์เป็นลิงก์สาธารณะ (ส่งไลน์ได้)
+     v0.3: ข้อมูล sync v4.1 + รหัสจองเข้ารหัสลับ AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
+     v0.4: หน้า Home หลังปลดล็อก — แผนอ่าน 10 วัน (การ์ดเลื่อนยาว + แถบกระโดด D1-D10 + ไฮไลต์มื้อ + ป้ายยังไม่จอง)
+           + การ์ด "ญี่ปุ่นไม่งง" (อากาศรวม · กฎเงินหาร 5 ดึงอัตราสด · คำญี่ปุ่นชี้ชัด · facts)
+           + เช็คลิสต์ก่อนเดินทางโดยน้องเฉาก๊วย (ติ๊กได้ ไม่นับ XP)
      ฟอนต์ CDN ได้เฉพาะ mockup (แอปจริงห้าม CDN — ต้องฝัง base64 ตอนยกไปใช้) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -309,6 +310,113 @@ button{font:inherit; color:inherit}
 #unlockBtn:disabled{opacity:.55}
 #skipUnlock{background:none; border:none; text-decoration:underline; cursor:pointer; color:var(--ink-soft); font-size:13px; margin-top:12px; padding:2px}
 
+/* ---------- หน้า Home — แผนอ่านทั้งทริป (v0.4) ---------- */
+#home{max-width:940px; margin:0 auto; padding:10px 12px 46px}
+#jumpbar{
+  position:sticky; top:6px; z-index:130; display:flex; gap:6px; overflow-x:auto;
+  padding:8px 70px 12px 6px; -webkit-overflow-scrolling:touch; scrollbar-width:thin;
+  background:linear-gradient(180deg, var(--ground) 78%, transparent);
+}
+.jb{
+  flex:0 0 auto; min-width:46px; height:42px; cursor:pointer; padding:0 9px;
+  border:2.5px solid var(--ink); border-radius:11px; background:var(--c); color:var(--on);
+  font-family:var(--head); font-size:15.5px; box-shadow:2px 2px 0 rgba(43,43,51,.75);
+}
+.jb.cur{transform:translateY(-3px); box-shadow:3px 4px 0 rgba(43,43,51,.9)}
+.jb:active{transform:translate(1.5px,1.5px); box-shadow:none}
+.jb.mode{background:var(--chip-bg); color:var(--ink)}
+.jb.pack{background:var(--gold); color:var(--ink)}
+.home-head{
+  text-align:center; background:var(--cover); border:3px solid var(--ink); border-radius:18px;
+  box-shadow:6px 6px 0 rgba(43,43,51,.9); padding:16px 14px; transform:rotate(-.4deg); margin:4px 0 14px;
+}
+.home-head h2{font-family:var(--head); font-size:26px; margin:0 0 4px}
+.home-head p{margin:0 0 10px; font-size:14.5px; color:var(--ink-soft)}
+#toGameBtn{
+  cursor:pointer; font-family:var(--head); font-size:18px; color:#fff;
+  background:var(--game-red); border:3px solid var(--ink); border-radius:13px;
+  box-shadow:4px 4px 0 var(--ink); padding:11px 22px;
+}
+#toGameBtn:active{transform:translate(3px,3px); box-shadow:1px 1px 0 var(--ink)}
+.daycard{
+  background:var(--paper); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:6px 6px 0 rgba(43,43,51,.85); padding:16px 16px 14px; margin:0 0 18px;
+  scroll-margin-top:64px;
+}
+.dc-head{display:flex; align-items:center; gap:11px; border-bottom:2px dashed var(--line); padding-bottom:10px; margin-bottom:11px}
+.dc-no{
+  flex:0 0 auto; min-width:56px; text-align:center;
+  font-family:var(--head); color:var(--on); background:var(--c);
+  border:3px solid var(--ink); border-radius:12px; padding:5px 8px 3px; line-height:1.05;
+}
+.dc-no small{display:block; font-size:10.5px; letter-spacing:1px}
+.dc-no b{font-size:22px; font-weight:400}
+.dc-head h3{font-family:var(--head); font-size:21px; margin:0; line-height:1.2}
+.dc-head .sub{display:block; font-size:13.5px; color:var(--ink-soft); font-weight:500; margin-top:2px}
+.tl{display:grid; gap:6px; margin:2px 0 12px}
+.tl-row{display:flex; gap:9px; align-items:flex-start}
+.tl-row .qtime{margin-top:2px; flex:0 0 auto}
+.tl-row .t{font-size:15.5px; font-weight:500; line-height:1.4; padding-top:2px}
+.mealbox{
+  display:flex; gap:11px; align-items:flex-start;
+  background:color-mix(in srgb, var(--gold) 20%, #fffdf6);
+  border:2.5px dashed var(--ink); border-radius:13px; padding:9px 13px;
+}
+.mealbox .fe{font-size:24px; line-height:1.2}
+.mealbox b{display:block; font-size:14.5px; line-height:1.35}
+.mealbox span:not(.nobook){display:block; font-size:12.5px; color:var(--ink-soft); margin-top:2px}
+.nobook{
+  display:inline-block; margin-top:5px; font-size:12px; font-weight:700; color:var(--game-red);
+  border:2px dashed var(--game-red); border-radius:999px; padding:1px 9px; background:#fffdf6;
+}
+.packcard{
+  background:var(--paper); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:6px 6px 0 rgba(43,43,51,.85); padding:16px 16px 12px; margin:22px 0 8px;
+  scroll-margin-top:64px;
+}
+.packcard h3{font-family:var(--head); font-size:20px; margin:0 0 2px}
+.packcard .sub{font-size:13.5px; color:var(--ink-soft); margin:0 0 12px}
+.packrow{
+  display:flex; gap:11px; align-items:flex-start; cursor:pointer; position:relative;
+  background:var(--chip-bg); border:2.5px solid var(--ink); border-radius:13px;
+  padding:9px 12px; min-height:52px; margin-bottom:8px;
+}
+.packrow input{position:absolute; opacity:0; width:1px; height:1px}
+.packrow .qbox{background:#fff}
+.packrow input:checked ~ .qbox{background:#27a874}
+.packrow input:checked ~ .ptext{color:var(--ink-soft); text-decoration:line-through; text-decoration-thickness:2px}
+.packrow .ptext{flex:1 1 auto; font-size:15px; font-weight:500; line-height:1.35; padding-top:4px}
+.jb.know{background:var(--chip-bg); color:var(--ink)}
+.knowcard{
+  background:var(--paper); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:6px 6px 0 rgba(43,43,51,.85); padding:16px 16px 12px; margin:18px 0 8px;
+  scroll-margin-top:64px;
+}
+.knowcard h3{font-family:var(--head); font-size:20px; margin:0 0 2px}
+.knowcard .sub{font-size:13.5px; color:var(--ink-soft); margin:0 0 12px}
+.know-grid{display:grid; gap:10px; grid-template-columns:1fr 1fr}
+@media (max-width:640px){ .know-grid{grid-template-columns:1fr} }
+.know-block{border:2.5px solid var(--ink); border-radius:13px; background:var(--chip-bg); padding:10px 12px; min-width:0}
+.know-block.wide{grid-column:1/-1}
+.know-block h4{font-family:var(--head); font-size:16.5px; margin:0 0 8px}
+.wstrip{display:flex; flex-wrap:wrap; gap:5px}
+.wchip{border:2px solid var(--ink); border-radius:9px; background:#fff; padding:2px 7px; font-size:12.5px; font-weight:600}
+.wchip b{color:var(--ink-soft); font-size:11px; margin-right:2px}
+.know-block .note{font-size:12px; color:var(--ink-soft); margin:7px 0 0}
+.rate-rule{
+  font-family:var(--head); font-size:17px; margin:0 0 7px; padding:6px 10px;
+  background:color-mix(in srgb, var(--gold) 30%, #fffdf6);
+  border:2.5px solid var(--ink); border-radius:10px;
+}
+#homeRate{font-size:12.5px; color:var(--ink-soft); display:block}
+.phr{display:grid; grid-template-columns:minmax(96px,auto) 1fr 1fr; gap:0 10px}
+.phr .h{font-size:11.5px; font-weight:700; color:var(--ink-soft); border-bottom:2px solid var(--ink); padding-bottom:4px}
+.phr .th,.phr .jp,.phr .rd{font-size:13.5px; padding:6px 0; border-bottom:1px dashed var(--line); line-height:1.35}
+.phr .th{font-weight:600}
+.phr .jp{font-family:var(--jp); font-weight:600}
+.phr .rd{color:var(--ink-soft)}
+.facts{font-size:13px; line-height:1.8}
+
 /* โอเวอร์เลย์กระโดดเบราว์เซอร์ (เฉพาะกรณีเปิดจากลิงก์ในแอปแชท) */
 #bouncer{
   position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center;
@@ -419,7 +527,7 @@ button{font:inherit; color:inherit}
       <span class="ql-step"><span class="n">1</span>กดค้างที่ไฟล์ในแชท แล้วเลือก “แชร์”</span>
       <span class="ql-step"><span class="n">2</span>เลือกเปิดด้วย Safari หรือ Chrome — เกมจะขึ้นเองทันที</span>
     </div>
-    <p class="cover-foot">เกม v0.3 · ข้อมูล Japan Trip Kit v4.1 · รหัสจองเข้ารหัสลับ AES 🔐 · <button id="resetB">รีเซ็ตความคืบหน้าเกม</button></p>
+    <p class="cover-foot">เกม v0.4 · ข้อมูล Japan Trip Kit v4.1 · รหัสจองเข้ารหัสลับ AES 🔐 · <button id="resetB">รีเซ็ตความคืบหน้าเกม</button></p>
   </div>
 </section>
 
@@ -448,6 +556,17 @@ button{font:inherit; color:inherit}
     <main id="page" aria-live="polite"><div class="page-inner" id="pageInner"></div></main>
     <nav id="tabs" aria-label="เลือกวันทริป"></nav>
   </div>
+</section>
+
+<!-- ============ หน้า Home — แผนอ่านทั้งทริป ============ -->
+<section id="home" hidden>
+  <nav id="jumpbar" aria-label="กระโดดไปวัน"></nav>
+  <div class="home-head">
+    <h2>📖 แผนทั้งทริป 10 วัน</h2>
+    <p id="homeSub">สรุปเรียงวัน — อ่านเฉย ๆ ไม่ต้องติ๊กภารกิจ</p>
+    <button id="toGameBtn" type="button">🎮 เข้าโหมดเกม เก็บ XP</button>
+  </div>
+  <div id="homeCards"></div>
 </section>
 
 <!-- ============ หน้าปลดล็อกรหัสลับ ============ -->
@@ -633,6 +752,42 @@ const DAYS = [
    ]}
 ];
 
+/* ===== ไฮไลต์มื้ออาหารรายวัน (จาก japan-trip-kit v4.1) ===== */
+const MEALS = {
+  1:{e:'🍢', t:'ปิ้งย่าง เนื้อวัว เนื้อไก่ เนื้อหมู ฉ่ำ ๆ ๆ', s:'มื้อค่ำ · เดินไม่ไกลจากโรงแรม'},
+  2:{e:'🍦', t:'สารพัดปลาดิบสด ๆ ตลาดปลาโอมิโจะ', s:'และมื้อค่ำ: ของลดราคา supermarket'},
+  3:{e:'🦀', t:'ปูเอจิเซ็น', s:'มื้อเที่ยง ริมผาโทจินโบ', nb:'เที่ยงยังไม่ได้จองร้าน · ค่ำยังไม่มีแผน'},
+  4:{e:'🍤', t:'กุ้งขาวชิโรเอบิ', s:'มื้อค่ำ เมืองโทยามะ', nb:'ยังไม่ได้จองร้าน'},
+  5:{e:'🍜', t:'ราเม็นร้อน ๆ เคยากิไดระ', s:'กลางหุบเขา', nb:'ยังไม่ได้จองร้าน'},
+  6:{e:'🍲', t:'อาหารค่ำสไตล์เรียวกัง ต้นตำรับญี่ปุ่นแท้', s:'Kusatsu Hotel 1913 · รวมค่ำ+เช้าในใบจอง'},
+  7:{e:'🍲', t:'ยูบะ/อุด้งเต้าหู้ร้อนริมทะเลสาบ', s:'คืนนี้บุฟเฟ่ต์เตาหินที่โรงแรม 🔥 (รวมค่ำ+เช้าในใบจอง)'},
+  8:{e:'🍱', t:'Kaiseki — อาหารคอร์สแบบญี่ปุ่น', s:'เรียวกังหุบเขาลึก — เย็นสุดของทริป 1°C 🥶'},
+  9:{e:'🍖', t:'ปิ้งย่างเนื้อวัว หมู ไก่ ฉ่ำ ๆ ๆ หรือราเม็งชื่อดังซักร้าน', s:'มื้อค่ำ', nb:'ยังไม่ได้จองร้าน — ตัดสินใจตอนนั้น'},
+  10:{e:'🥡', t:'เบนโต/ขนมสถานีโตเกียว', s:'ก่อนขึ้นเครื่อง — ซื้อไปกินบนเครื่อง'}
+};
+/* ===== เช็คลิสต์เตรียมตัวก่อนเดินทาง (น้องเฉาก๊วยแนะนำ) ===== */
+const PACK = [
+  {t:'🛂 เอกสารสำคัญ — พาสปอร์ตทุกคน + ใบอนุญาตขับขี่สากล (IDP) สำหรับคนขับ'},
+  {t:'🧥 เสื้อผ้าเหมาะกับอากาศ — ทริปนี้ 1–23°C ยามเช้าหุบเขาแทบ 0°C ต้องมีเสื้อกันหนาว/ชั้นในอุ่น'},
+  {t:'🌂 ร่มหรือเสื้อกันฝน — หลายวันพยากรณ์ฝนปรอย'},
+  {t:'👟 รองเท้าพร้อมเดิน — สวน วัด น้ำตก ตลาด เดินกันเยอะแน่'},
+  {t:'💊 ยารักษาโรคประจำตัว + ยาทั่วไป (แผล แสบท้อง ชันใน)'},
+  {t:'🔌 ที่ชาร์จ + ปลั๊กแปลงญี่ปุ่น (ช่องแบนสองขา) + แบตสำรอง'},
+  {t:'🚿 ของใช้ส่วนตัวในห้องน้ำ — โรงแรมบางที่ให้เบาบาง'},
+  {t:'👓 แว่นตา/คอนแทกเลนส์ + แว่นกันแดด'}
+];
+/* ===== คำญี่ปุ่นชี้ชัด (ชี้ประโยคญี่ปุ่นให้คนญี่ปุ่นอ่าน) ===== */
+const PHR = [
+  ['สวัสดี','こんにちは','คอนนิจิวะ'],
+  ['ขอบคุณมาก','ありがとうございます','อาริกาโตโกซาอิมาสุ'],
+  ['ขอโทษ / ขอรบกวน','すみません','สุมิมาเซ็น'],
+  ['ห้องน้ำอยู่ไหน?','トイレはどこですか？','โทอิเระ วะ โดโกะ เดสกะ'],
+  ['ราคาเท่าไหร่?','いくらですか？','อิคุระ เดสกะ'],
+  ['ไม่กินเนื้อวัว','牛肉は食べられません','กีวนิคุ วะ ทาเบราเรมาเซ็น'],
+  ['ไม่กินเนื้อสัตว์ (กินปลา/อาหารทะเลได้)','肉は食べられません','นิคุ วะ ทาเบราเรมาเซ็น'],
+  ['พาไปที่นี่ (ชี้ชื่อร้าน/แผนที่)','ここまでお願いします','โคโคะ มาเดะ โอเนงาอิชิมาสุ']
+];
+
 /* ===== ห้องนิรภัยรหัสจอง — AES-GCM + PBKDF2 (รหัสจองไม่อยู่ในไฟล์แบบข้อความล้วน) ===== */
 const VAULT = {"v":1,"iters":400000,"salt":"MyTSZ5I3ntOTI9D7Vc8CwA==","iv":"Pn092HgsGq3voOHv","ct":"KrsZQVmI2NXHiRDUQBlPkoMfTSNjFXOoCqaQppcQHokIZOP9dGJPbgRzxluNcFmMBjqiNeLI/sprn0w451kARso1ubyxDT3CgiseyIedMSJ0NUWeBT/Yhrnj10o/++4ou3IA85AEdNMB/3LW06sR0c2VbIkv3UIup1IzxV3nnzQGNXffOwqd/YGTnRCdFfCkLH2hCoJsNtBxZnbjGpsd4IbvJeY30Ch82yDJOwPyHE5mR/xqsfuS38UceWRu4LvzwfJx1v2GBuQ0I6l4MAFyqk0OmzvOEkBT3zoSWi7tA951W50UmgYigMwZ7as3lUnTdWgxNiA/IFvPrDC5iwO4vnNpgGFDq/tfwzP2NlR6pTBQxjHxf33fzR1LWu8MirJBbk9V14aau6zGrnNC"};
 const UNLOCK_KEY = 'chaokuay-unlock-v03';
@@ -686,6 +841,7 @@ DAYS.forEach(d=>{
     S.checks[d.n] = d.quests.map((_,i)=> old[i] === true);
   }
 });
+if(!S.pack) S.pack = {};
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
 /* ===== คำนวณ ===== */
@@ -783,7 +939,7 @@ function renderDay(){
   updateDayStatus();
   $('prevB').addEventListener('click', ()=> setDay(S.day-1));
   $('nextB').addEventListener('click', ()=> setDay(S.day+1));
-  $('homeB').addEventListener('click', showCover);
+  $('homeB').addEventListener('click', ()=> enterHome());
   if(!pageInner.classList.contains('flip')){
     pageInner.classList.add('flip');
     setTimeout(()=> pageInner.classList.remove('flip'), 300);
@@ -848,7 +1004,7 @@ async function doUnlock(){
     BK = await tryUnlock(pw);
     try{ localStorage.setItem(UNLOCK_KEY, JSON.stringify(BK)); }catch(e){}
     closeUnlock();
-    if(game.hidden) enterGame(); else setDay(S.day);
+    if(!game.hidden) setDay(S.day); else enterHome();
     showToast('🔓 ปลดล็อกรหัสจองสำเร็จ!');
   }catch(err){
     unlockFails++;
@@ -870,20 +1026,121 @@ $('pwShow').addEventListener('click', ()=>{
   $('pwShow').textContent = pwInput.type === 'password' ? '👁 แสดงรหัส' : '🙈 ซ่อนรหัส';
 });
 $('skipUnlock').addEventListener('click', ()=>{
-  closeUnlock(); enterGame();
-  showToast('รหัสจองยังถูกซ่อน — กดปุ่ม 🔒 ในหน้าวันเพื่อปลดล็อกได้ทุกเมื่อ');
+  closeUnlock(); enterHome();
+  showToast('รหัสจองยังถูกซ่อน — กดปุ่ม 🔒 เพื่อปลดล็อกได้ทุกเมื่อ');
+});
+
+/* ===== หน้า Home — แผนอ่านทั้งทริป + ญี่ปุ่นไม่งง + เช็คลิสต์ ===== */
+const homeEl = $('home'), homeCards = $('homeCards'), jumpbar = $('jumpbar');
+function buildJumpbar(){
+  jumpbar.innerHTML = '';
+  DAYS.forEach(d=>{
+    const col = CITIES[d.col];
+    const b = document.createElement('button');
+    b.className = 'jb'; b.style.setProperty('--c', col.c); b.style.setProperty('--on', col.on);
+    b.textContent = 'D' + d.n; b.title = 'วัน ' + d.n + ' · ' + d.city;
+    b.addEventListener('click', ()=> gotoDay(d.n));
+    jumpbar.appendChild(b);
+  });
+  const bk = document.createElement('button');
+  bk.className = 'jb know'; bk.textContent = '🇯🇵 ไม่งง';
+  bk.title = 'อากาศ · เงิน · คำญี่ปุ่น';
+  bk.addEventListener('click', ()=> gotoDay('know'));
+  jumpbar.appendChild(bk);
+  const bp = document.createElement('button');
+  bp.className = 'jb pack'; bp.textContent = '🎒 เช็คลิสต์';
+  bp.addEventListener('click', ()=> gotoDay('pack'));
+  jumpbar.appendChild(bp);
+  const bg = document.createElement('button');
+  bg.className = 'jb mode'; bg.textContent = '🎮 เกม';
+  bg.addEventListener('click', ()=> enterGame());
+  jumpbar.appendChild(bg);
+}
+function renderHome(){
+  $('homeSub').textContent = BK
+    ? 'สรุปเรียงวันทั้งทริป — รหัสจองปลดล็อกแล้ว ✓ · อ่านเฉย ๆ ไม่ต้องติ๊กภารกิจ'
+    : 'สรุปเรียงวันทั้งทริป — รหัสจองยังล็อก กด 🔒 ในการ์ดเพื่อปลดล็อก';
+  const wchip = d => {
+    const m = d.w.match(/^(\S+)\s+(.+?)\s+(\S+)°\/(\S+)°$/);
+    return '<span class="wchip" title="'+esc(m[2])+'"><b>D'+d.n+'</b> '+m[1]+' '+m[3]+'°/'+m[4]+'°</span>';
+  };
+  homeCards.innerHTML = DAYS.map(d=>{
+    const col = CITIES[d.col], m = MEALS[d.n];
+    return '<article class="daycard" id="hd'+d.n+'" style="--c:'+col.c+';--on:'+col.on+'">' +
+      '<div class="dc-head">' +
+        '<span class="dc-no"><small>DAY</small><b>'+d.n+'</b></span>' +
+        '<div><h3>'+d.city+'</h3><span class="sub">'+d.sub+'</span></div>' +
+      '</div>' +
+      '<div class="chips">' +
+        '<div class="chip"><b>'+d.trans+'</b></div>' +
+        '<div class="chip hotel">'+d.hotel+(d.bks&&d.bks.length?' '+d.bks.map(bkHTML).join(' '):'')+'</div>' +
+        '<div class="chip">'+d.w+'</div>' +
+      '</div>' +
+      '<div class="tl">' + d.quests.map(q=>
+        '<div class="tl-row"><span class="qtime">'+q.time+'</span><span class="t">'+q.t+'</span></div>'
+      ).join('') + '</div>' +
+      (m ? '<div class="mealbox"><span class="fe">'+m.e+'</span><div><b>🍽 '+m.t+'</b><span>'+m.s+'</span>' +
+          (m.nb?'<span class="nobook">⚠ ยังไม่ได้จอง — '+m.nb+'</span>':'') + '</div></div>' : '') +
+    '</article>';
+  }).join('') +
+  '<article class="knowcard" id="hdknow">' +
+    '<h3>🇯🇵 ญี่ปุ่นไม่งง</h3>' +
+    '<p class="sub">ของที่ควรรู้ติดกระเป๋า — กวาดตาเดียวจบ</p>' +
+    '<div class="know-grid">' +
+      '<div class="know-block"><h4>🌦 อากาศรวม 10 วัน</h4><div class="wstrip">' + DAYS.map(wchip).join('') + '</div>' +
+        '<p class="note">เย็นสุดที่ยูนิชิกาวะ 1°C ยามเช้า — เสื้อกันหนาวถึงจริง 🥶</p></div>' +
+      '<div class="know-block"><h4>💴 เงินเยน คิดในใจ</h4>' +
+        '<div class="rate-rule">เห็นราคาเยน ➔ หาร 5 = เงินไทย</div>' +
+        '<span id="homeRate">อัตราค่าฝังไฟล์: 100¥ ≈ ฿21.25 — มีเน็ตจะดึงอัตราสดให้เอง</span>' +
+        '<p class="note">1,000¥ ≈ ฿200 · 5,000¥ ≈ ฿1,000 · 10,000¥ ≈ ฿2,000 (ได้น้อยกว่าจริงนิดหน่อย = กันเผื่อ ไม่ตกใช้)</p></div>' +
+      '<div class="know-block wide"><h4>🗣 คำญี่ปุ่นชี้ชัด</h4>' +
+        '<div class="phr"><span class="h">ภาษาไทย</span><span class="h">ญี่ปุ่น (ชี้ให้เขาอ่าน)</span><span class="h">อ่านว่า</span>' +
+        PHR.map(p=>'<span class="th">'+p[0]+'</span><span class="jp">'+p[1]+'</span><span class="rd">'+p[2]+'</span>').join('') +
+        '</div><p class="note">เคล็ด: ชี้ประโยคภาษาญี่ปุ่นให้คนญี่ปุ่นอ่านตรง ๆ ง่ายสุด</p></div>' +
+      '<div class="know-block wide facts">🚨 ฉุกเฉิน ตำรวจ <b>110</b> · รถพยาบาล/ไฟไหม้ <b>119</b> &nbsp;·&nbsp; ⏰ เวลาญี่ปุ่นเร็วกว่าไทย <b>2 ชม.</b> &nbsp;·&nbsp; 🔌 ปลั๊กแบนสองขา 100V &nbsp;·&nbsp; 💁 ญี่ปุ่นไม่รับทิป</div>' +
+    '</div>' +
+  '</article>' +
+  '<article class="packcard" id="hdpack">' +
+    '<h3>🎒 เช็คลิสต์ก่อนเดินทาง</h3>' +
+    '<p class="sub">น้องเฉาก๊วยจัดมาให้เอง 🐈‍⬛ — ติ๊กได้เลย (ไม่นับ XP เกม แค่จำในเครื่องนี้)</p>' +
+    PACK.map((p,i)=>
+      '<label class="packrow"><input type="checkbox" data-p="'+i+'"'+(S.pack[i]?' checked':'')+'>' +
+      '<span class="qbox" aria-hidden="true"></span><span class="ptext">'+p.t+'</span></label>'
+    ).join('') +
+  '</article>';
+}
+function gotoDay(n){
+  const el = document.getElementById(n==='pack'?'hdpack':(n==='know'?'hdknow':'hd'+n));
+  if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+  const idx = n==='pack' ? 11 : (n==='know' ? 10 : (n-1));
+  [...jumpbar.querySelectorAll('.jb')].forEach((b,i)=> b.classList.toggle('cur', i === idx));
+}
+function enterHome(){
+  cover.hidden = true; game.hidden = true; homeEl.hidden = false;
+  renderHome();
+  window.scrollTo(0,0);
+}
+$('toGameBtn').addEventListener('click', ()=> enterGame());
+homeCards.addEventListener('change', e=>{
+  if(e.target && e.target.matches('input[type="checkbox"]')){
+    S.pack[+e.target.dataset.p] = e.target.checked; save();
+  }
+});
+homeCards.addEventListener('click', e=>{
+  const b = e.target.closest('.bk.locked');
+  if(b) openUnlock();
 });
 
 /* ===== ปก / เริ่มเกม ===== */
-function showCover(){ game.hidden = true; cover.hidden = false; }
+function showCover(){ game.hidden = true; homeEl.hidden = true; cover.hidden = false; }
 function enterGame(){
-  cover.hidden = true; game.hidden = false;
+  cover.hidden = true; homeEl.hidden = true; game.hidden = false;
   setDay(S.day);
   window.scrollTo(0,0);
 }
 function startGame(){
   if(unlockEl.hidden === false) return;   /* กันสอง event ซ้อน */
-  if(BK) enterGame(); else openUnlock();
+  if(BK) enterHome(); else openUnlock();
 }
 $('startBtn').addEventListener('click', startGame);
 
@@ -932,7 +1189,14 @@ try{
   if(cached){ BK = JSON.parse(cached); }
 }catch(e){}
 DAYS.forEach(d=>{ if(dayFull(d)) d._cheered = true; });
-applyFS(); buildTabs(); renderHUD();
+applyFS(); buildTabs(); renderHUD(); buildJumpbar();
+/* ดึงอัตราแลกเปลี่ยนสดสำหรับหน้า Home (เมื่อมีเน็ต — ออฟไลน์ใช้ค่าฝัง) */
+fetch('https://open.er-api.com/v6/latest/JPY').then(r=>r.json()).then(d=>{
+  const el = document.getElementById('homeRate');
+  if(el && d && d.rates && d.rates.THB){
+    el.textContent = 'อัตราจริงวันนี้: 100¥ ≈ ฿' + (d.rates.THB*100).toFixed(2) + ' · อัปเดตสดเมื่อวินาทีนี้';
+  }
+}).catch(()=>{});
 (function(){
   const done = DAYS.reduce((s,d)=> s + S.checks[d.n].filter(Boolean).length, 0);
   if(done > 0){
