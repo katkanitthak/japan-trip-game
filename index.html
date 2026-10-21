@@ -966,6 +966,7 @@ const DOCMETA = {
 /* ===== รูปใบจองจริง — docs-pack.enc (AES-GCM เหมือนรหัสจอง, โหลดเฉพาะเมื่อต้องใช้) ===== */
 let DOCS = null;        /* manifest รูปใบจองหลังถอดรหัสสำเร็จ {key:{photos:[dataURI]}} */
 let PW_KEEP = null;     /* จำรหัสไว้ในหน่วยความจำเฉพาะการเปิดครั้งนี้ (ไม่บันทึกลงเครื่อง) */
+let docsPromise = null; /* single-flight — กันโหลดซ้อนกันตอนคลิกชิประหว่างแพ็คยังดาวน์โหลดอยู่ */
 const idbOpen = () => new Promise((res, rej)=>{
   const rq = indexedDB.open('chaokuay-docs-v05', 1);
   rq.onupgradeneeded = ()=>{ try{ rq.result.createObjectStore('kv'); }catch(e){} };
@@ -980,21 +981,26 @@ async function idb(mode, val){
     return await new Promise(res=>{ op.onsuccess = ()=> res(op.result); op.onerror = ()=> res(null); });
   }catch(e){ return null; }
 }
-async function loadDocsPack(pw){
-  if(DOCS) return DOCS;
-  const cached = await idb('readonly');
-  if(cached){ DOCS = cached; window.__docsLoaded = true; return DOCS; }
-  if(!pw) return null;                     /* ไม่มีรหัสให้ถอด → ต้องใส่รหัสอีกครั้ง */
-  const raw = await (await fetch('docs-pack.enc')).text();
-  const meta = JSON.parse(raw);
-  const mat = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
-  const key = await crypto.subtle.deriveKey(
-    {name:'PBKDF2', salt:b64ToBuf(meta.salt), iterations:meta.iters, hash:'SHA-256'},
-    mat, {name:'AES-GCM', length:256}, false, ['decrypt']);
-  DOCS = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:b64ToBuf(meta.iv)}, key, b64ToBuf(meta.ct))));
-  idb('readwrite', DOCS);
-  window.__docsLoaded = true;
-  return DOCS;
+function ensureDocs(){
+  if(DOCS) return Promise.resolve(DOCS);
+  if(!docsPromise){
+    docsPromise = (async ()=>{
+      const cached = await idb('readonly');          /* เครื่องนี้เคยโหลด → ใช้ cache ไม่ต้องใส่รหัสใหม่ */
+      if(cached){ DOCS = cached; window.__docsLoaded = true; return DOCS; }
+      if(!PW_KEEP) return null;                      /* ไม่มีรหัสให้ถอด → ให้ผู้เรียกสั่งใส่รหัส */
+      const raw = await (await fetch('docs-pack.enc')).text();
+      const meta = JSON.parse(raw);
+      const mat = await crypto.subtle.importKey('raw', new TextEncoder().encode(PW_KEEP), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey(
+        {name:'PBKDF2', salt:b64ToBuf(meta.salt), iterations:meta.iters, hash:'SHA-256'},
+        mat, {name:'AES-GCM', length:256}, false, ['decrypt']);
+      DOCS = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:b64ToBuf(meta.iv)}, key, b64ToBuf(meta.ct))));
+      idb('readwrite', DOCS);
+      window.__docsLoaded = true;
+      return DOCS;
+    })().catch(e=>{ docsPromise = null; throw e; });
+  }
+  return docsPromise;
 }
 
 function b64ToBuf(b){
@@ -1216,7 +1222,7 @@ async function doUnlock(){
     closeUnlock();
     if(!game.hidden) setDay(S.day); else enterMenu();
     showToast('🔓 ปลดล็อกสำเร็จ! กำลังโหลดรูปใบจอง…');
-    loadDocsPack(pw).catch(()=>{ showToast('โหลดรูปใบจองไม่ได้ — ต่อเน็ตครั้งหน้า (รหัสจองใช้ได้อยู่)'); });
+    ensureDocs().catch(()=>{ showToast('โหลดรูปใบจองไม่ได้ — ต่อเน็ตครั้งหน้า (รหัสจองใช้ได้อยู่)'); });
   }catch(err){
     unlockFails++;
     if(err && err.message === 'NO_SUBTLE'){
@@ -1425,11 +1431,8 @@ async function openDoc(key){
   if(!BK){ openUnlock(); showToast('รูปใบจอง — ปลดล็อกด้วยรหัสครอบครัวก่อนนะ 🔐'); return; }
   if(!DOCS){
     try{
-      const cached = await loadDocsPack(null);        /* มี cache ในเครื่อง → ใช้เลย ไม่ต้องใส่รหัสใหม่ */
-      if(!cached){
-        if(PW_KEEP){ showToast('กำลังโหลดรูปใบจอง… เดี๋ยวนะ'); await loadDocsPack(PW_KEEP); }
-        else{ openUnlock(); showToast('ใส่รหัสอีกครั้ง เพื่อโหลดรูปใบจอง (โหลดแล้วจำไว้ในเครื่อง)'); return; }
-      }
+      const got = await ensureDocs();
+      if(!got){ openUnlock(); showToast('ใส่รหัสอีกครั้ง เพื่อโหลดรูปใบจอง (โหลดแล้วจำไว้ในเครื่อง)'); return; }
     }catch(e){
       showToast('โหลดรูปไม่ได้ — ต่อเน็ตแล้วกดอีกที (เลขจองยังอ่านได้อยู่)');
       return;
