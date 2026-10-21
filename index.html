@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.4)</title>
-<!-- 004-arcade-stage · v0.4 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
+<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.5)</title>
+<!-- 004-arcade-stage · v0.5 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
      โครงมาจาก mockup 002 (สมุดแท็บรายวัน) + ชุดเกม: HUD ยศ/XP · ปุ่มอาร์เคดขอบหนา · แมวนำทาง "น้องเฉาก๊วย"
      v0.3: ข้อมูล sync v4.1 + รหัสจองเข้ารหัสลับ AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
-     v0.4: หน้า Home หลังปลดล็อก — แผนอ่าน 10 วัน (การ์ดเลื่อนยาว + แถบกระโดด D1-D10 + ไฮไลต์มื้อ + ป้ายยังไม่จอง)
-           + การ์ด "ญี่ปุ่นไม่งง" (อากาศรวม · กฎเงินหาร 5 ดึงอัตราสด · คำญี่ปุ่นชี้ชัด · facts)
-           + เช็คลิสต์ก่อนเดินทางโดยน้องเฉาก๊วย (ติ๊กได้ ไม่นับ XP)
+     v0.4: หน้า Home แผนอ่าน 10 วัน + "ญี่ปุ่นไม่งง" + เช็คลิสต์เตรียมตัว
+     v0.5: หลังปลดล็อก = เมนูยักษ์ 4 ปุ่ม — A แผนทริป 10 วัน (ชิปรหัสจองกด→รูปใบจองจริง)
+           · B โหมดเกม · C ญี่ปุ่นไม่งง + เช็คลิสต์ · D เอกสารสำคัญ (รูปใบจองแยกหมวด)
+           รูปใบจอง 26 ภาพเข้ารหัส AES ฝังใน docs-pack.enc (แยกไฟล์ โหลดหลังปลดล็อก)
      ฟอนต์ CDN ได้เฉพาะ mockup (แอปจริงห้าม CDN — ต้องฝัง base64 ตอนยกไปใช้) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -200,6 +201,8 @@ button{font:inherit; color:inherit}
   font-family:var(--head); font-weight:400;
 }
 .bk.locked:active{transform:translateY(1.5px)}
+.bk.ok{cursor:pointer; background:color-mix(in srgb, var(--gold) 16%, #fff)}
+.bk.ok:active{transform:translateY(1.5px)}
 
 /* ภารกิจ */
 .prog-row{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; margin:2px 0 10px}
@@ -417,6 +420,92 @@ button{font:inherit; color:inherit}
 .phr .rd{color:var(--ink-soft)}
 .facts{font-size:13px; line-height:1.8}
 
+/* ---------- เมนูยักษ์ 4 ปุ่ม (v0.5) ---------- */
+#menu{min-height:100dvh; display:grid; place-items:center; padding:26px 16px 44px}
+.menu-card{
+  width:min(600px,100%); background:var(--cover); border:3px solid var(--ink);
+  border-radius:22px; box-shadow:8px 8px 0 rgba(43,43,51,.9);
+  padding:26px 20px 22px; text-align:center; transform:rotate(-.4deg); position:relative;
+}
+.menu-card h2{font-family:var(--head); font-size:25px; margin:0 0 3px}
+.menu-card .sub{font-size:14.5px; color:var(--ink-soft); margin:0 0 15px}
+.menu-tiles{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.mtile{
+  cursor:pointer; text-align:left; display:flex; gap:12px; align-items:center;
+  background:var(--chip-bg); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:4px 4px 0 rgba(43,43,51,.9); padding:15px 14px; min-height:92px;
+  font-family:var(--body); line-height:inherit;
+}
+.mtile:active{transform:translate(3px,3px); box-shadow:1px 1px 0 rgba(43,43,51,.9)}
+.mtile .ic{
+  flex:0 0 auto; width:54px; height:54px; border-radius:14px; border:3px solid var(--ink);
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+}
+.mtile.b .ic{background:var(--game-red); color:#fff}
+.mtile.a .ic{background:color-mix(in srgb, var(--game-red) 14%, #fffdf6)}
+.mtile.c .ic{background:color-mix(in srgb, var(--gold) 38%, #fffdf6)}
+.mtile.d .ic{background:color-mix(in srgb, #3b8fd8 16%, #fffdf6)}
+.mtile b{display:block; font-family:var(--head); font-size:17.5px; font-weight:400; line-height:1.2}
+.mtile span{display:block; font-size:12.5px; color:var(--ink-soft); margin-top:3px}
+.mtile.wide{grid-column:1/-1; min-height:70px}
+@media (max-width:430px){ .menu-tiles{grid-template-columns:1fr} .mtile{min-height:76px} .mtile.wide{min-height:64px} }
+
+/* ---------- หน้าย่อยในเมนู (C ญี่ปุ่นไม่งง / D เอกสารสำคัญ) ---------- */
+.sec{max-width:940px; margin:0 auto; padding:10px 12px 46px}
+.home-head .btnrow{display:flex; gap:9px; justify-content:center; flex-wrap:wrap}
+#toMenuBtn,#secMenuBtn{
+  cursor:pointer; font-family:var(--head); font-size:16px; color:var(--ink);
+  background:var(--chip-bg); border:2.5px solid var(--ink); border-radius:13px;
+  box-shadow:3px 3px 0 var(--ink); padding:11px 18px;
+}
+#toMenuBtn:active,#secMenuBtn:active{transform:translate(3px,3px); box-shadow:0 0 0 var(--ink)}
+
+/* ---------- หน้า D เอกสารสำคัญ ---------- */
+.doccat-t{font-family:var(--head); font-size:20px; margin:20px 0 10px}
+.doccard{
+  display:flex; gap:12px; align-items:center; width:100%; text-align:left;
+  background:var(--paper); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:5px 5px 0 rgba(43,43,51,.85); padding:13px 14px; cursor:pointer;
+  font-family:var(--body); line-height:inherit; margin-bottom:10px;
+}
+.doccard:active{transform:translate(3px,3px); box-shadow:2px 2px 0 rgba(43,43,51,.85)}
+.doccard .ic{
+  flex:0 0 auto; width:50px; height:50px; border-radius:13px; border:3px solid var(--ink);
+  display:flex; align-items:center; justify-content:center; font-size:25px;
+  background:color-mix(in srgb, var(--gold) 22%, #fffdf6);
+}
+.doccard .dc{flex:1 1 auto; min-width:0}
+.doccard b{display:block; font-family:var(--head); font-size:17px; font-weight:400; line-height:1.25}
+.doccard .dsub{display:block; font-size:13px; color:var(--ink-soft); margin-top:2px}
+.doccard .thumbs{flex:0 0 auto; display:flex; gap:5px; align-items:center}
+.doccard .thumbs .tn{
+  width:26px; height:26px; border:2.5px solid var(--ink); border-radius:8px;
+  background:var(--gold); display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-family:var(--head);
+}
+.doccard.hold{cursor:default; opacity:.75}
+.doccard .dsub.nobook{color:var(--game-red); font-weight:600}
+.doccard .codes{margin-top:4px}
+
+/* ---------- ตัวดูรูปใบจอง ---------- */
+#viewer{position:fixed; inset:0; z-index:520; background:rgba(43,43,51,.95);
+  display:flex; flex-direction:column; padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+#viewer[hidden]{display:none !important}
+.v-head{display:flex; gap:10px; align-items:center; margin-bottom:9px}
+.v-head b{font-family:var(--head); font-size:17px; font-weight:400; color:#fff; flex:1 1 auto;
+  min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.v-imgwrap{flex:1 1 auto; display:flex; align-items:center; justify-content:center; min-height:0}
+.v-img{max-width:100%; max-height:calc(100dvh - 190px); border:3px solid #fff; border-radius:10px; background:#fff}
+.v-meta{color:#e8e2d4; font-size:13px; text-align:center; margin-top:9px; line-height:1.5}
+.v-nav{display:flex; gap:9px; justify-content:center; align-items:center; margin-top:5px}
+.v-btn{
+  cursor:pointer; background:var(--gold); color:var(--ink); border:2.5px solid var(--ink);
+  border-radius:12px; font-family:var(--head); font-size:15px; padding:10px 16px; min-height:48px;
+}
+.v-btn:active{transform:translateY(2px)}
+.v-btn:disabled{opacity:.4; cursor:default}
+#vCount{color:#fff; font-size:14px; font-family:var(--head); min-width:56px; text-align:center}
+
 /* โอเวอร์เลย์กระโดดเบราว์เซอร์ (เฉพาะกรณีเปิดจากลิงก์ในแอปแชท) */
 #bouncer{
   position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center;
@@ -527,7 +616,7 @@ button{font:inherit; color:inherit}
       <span class="ql-step"><span class="n">1</span>กดค้างที่ไฟล์ในแชท แล้วเลือก “แชร์”</span>
       <span class="ql-step"><span class="n">2</span>เลือกเปิดด้วย Safari หรือ Chrome — เกมจะขึ้นเองทันที</span>
     </div>
-    <p class="cover-foot">เกม v0.4 · ข้อมูล Japan Trip Kit v4.1 · รหัสจองเข้ารหัสลับ AES 🔐 · <button id="resetB">รีเซ็ตความคืบหน้าเกม</button></p>
+    <p class="cover-foot">เกม v0.5 · ข้อมูล Japan Trip Kit v4.1 · รหัสจอง + รูปใบจองเข้ารหัสลับ AES 🔐 · <button id="resetB">รีเซ็ตความคืบหน้าเกม</button></p>
   </div>
 </section>
 
@@ -558,16 +647,76 @@ button{font:inherit; color:inherit}
   </div>
 </section>
 
-<!-- ============ หน้า Home — แผนอ่านทั้งทริป ============ -->
+<!-- ============ หน้า Home — แผนอ่านทั้งทริป (ปุ่ม A) ============ -->
 <section id="home" hidden>
   <nav id="jumpbar" aria-label="กระโดดไปวัน"></nav>
   <div class="home-head">
     <h2>📖 แผนทั้งทริป 10 วัน</h2>
     <p id="homeSub">สรุปเรียงวัน — อ่านเฉย ๆ ไม่ต้องติ๊กภารกิจ</p>
-    <button id="toGameBtn" type="button">🎮 เข้าโหมดเกม เก็บ XP</button>
+    <div class="btnrow">
+      <button id="toMenuBtn" type="button">🏛 กลับเมนุ</button>
+      <button id="toGameBtn" type="button">🎮 เข้าโหมดเกม เก็บ XP</button>
+    </div>
   </div>
   <div id="homeCards"></div>
 </section>
+
+<!-- ============ เมนูยักษ์ 4 ปุ่ม (v0.5) ============ -->
+<section id="menu" hidden>
+  <div class="menu-card">
+    <h2>ทริปญี่ปุ่นของเรา 🐈‍⬛</h2>
+    <p class="sub">ปลดล็อกสำเร็จ ✓ — กดเลือกปุ่มยักษ์ที่อยากดูได้เลย</p>
+    <div class="menu-tiles">
+      <button class="mtile a" id="tileA" type="button"><span class="ic">📖</span><span><b>A · ดูแผนทริป 10 วัน</b><span>อ่านเรียงวัน D1–D10 · กดรหัสจองแล้วดูรูปใบจองจริง</span></span></button>
+      <button class="mtile b" id="tileB" type="button"><span class="ic">🎮</span><span><b>B · เข้าโหมดเล่นเกม</b><span>ติ๊กภารกิจ เก็บ XP เลื่อนยศ 🏅</span></span></button>
+      <button class="mtile c" id="tileC" type="button"><span class="ic">🇯🇵</span><span><b>C · ญี่ปุ่นไม่งง</b><span>อากาศ · เงิน · คำญี่ปุ่นชี้ชัด</span></span></button>
+      <button class="mtile d" id="tileD" type="button"><span class="ic">🗂</span><span><b>D · เอกสารสำคัญ</b><span>รูปใบจองจริง — ที่พัก · รถไฟ · เครื่องบิน · รถ</span></span></button>
+      <button class="mtile wide" id="tileP" type="button"><span class="ic">🎒</span><span><b>ห้ามลืมก่อนบิน — เช็คลิสต์</b><span>พาสปอร์ต · IDP · เสื้อกันหนาว · ปลั๊กญี่ปุ่น</span></span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ หน้า C — ญี่ปุ่นไม่งง + เช็คลิสต์ ============ -->
+<section id="know" class="sec" hidden>
+  <div class="home-head">
+    <h2>🇯🇵 ญี่ปุ่นไม่งง เรื่องต้องรู้</h2>
+    <p>ของที่ควรรู้ติดกระเป๋า — อ่านเดี๋ยวเดียวจบ</p>
+    <div class="btnrow"><button id="secMenuBtn" type="button">🏛 กลับเมนุ</button></div>
+  </div>
+  <div id="knowInner"></div>
+</section>
+
+<!-- ============ หน้า 🎒 ห้ามลืมก่อนบิน (เช็คลิสต์) ============ -->
+<section id="pack" class="sec" hidden>
+  <div class="home-head">
+    <h2>🎒 ห้ามลืมก่อนบิน</h2>
+    <p>เช็คลิสต์ก่อนเดินทาง — น้องเฉาก๊วยจัดมาให้ 🐈‍⬛</p>
+    <div class="btnrow"><button id="packMenuBtn" type="button">🏛 กลับเมนุ</button></div>
+  </div>
+  <div id="packInner"></div>
+</section>
+
+<!-- ============ หน้า D — เอกสารสำคัญ (รูปใบจองแยกหมวด) ============ -->
+<section id="docs" class="sec" hidden>
+  <div class="home-head">
+    <h2>🗂 เอกสารสำคัญ — ใบจองจริงทั้งหมด</h2>
+    <p>กดการ์ดแล้วดูรูปใบจองต้นฉบับได้เลย</p>
+    <div class="btnrow"><button id="docsMenuBtn" type="button">🏛 กลับเมนุ</button></div>
+  </div>
+  <div id="docsInner"></div>
+</section>
+
+<!-- ============ ตัวดูรูปใบจอง ============ -->
+<div id="viewer" hidden>
+  <div class="v-head"><b id="vTitle"></b><button id="vClose" class="v-btn" type="button">✕ ปิด</button></div>
+  <div class="v-imgwrap"><img id="vImg" class="v-img" alt="รูปใบจองจริง"></div>
+  <div class="v-meta" id="vMeta"></div>
+  <div class="v-nav">
+    <button id="vPrev" class="v-btn" type="button">◀ รูปก่อนหน้า</button>
+    <span id="vCount"></span>
+    <button id="vNext" class="v-btn" type="button">รูปถัดไป ▶</button>
+  </div>
+</div>
 
 <!-- ============ หน้าปลดล็อกรหัสลับ ============ -->
 <div id="unlock" hidden>
@@ -610,6 +759,7 @@ const DAYS = [
    trans:'✈️ ANA NH806 สุวรรณภูมิ 07:10 → นาริตะ 15:05',
    hotel:'🏨 Mitsui Garden Hotel Ueno · 26–27 ต.ค. (1 คืน) · 2 ห้อง',
    bks:['d1hotel'],
+   tbks:['d1flight','d1van'],
    w:'🌦 โตเกียว 21°/17°',
    quests:[
      {t:'บิน ANA NH806 จากสุวรรณภูมิ ➔ นาริตะ (~5 ชม. 55 นาที)', time:'07:10-15:05'},
@@ -623,6 +773,7 @@ const DAYS = [
    trans:'🚄 Kagayaki No.507 อูเอโนะ 09:26 → คานาซาวา 11:52 (โบกี้ 7 · 7D/7E/8D/8E)',
    hotel:'🏨 Hotel Forza Kanazawa · 27–29 ต.ค. (2 คืน) · 2 ห้อง',
    bks:['d2hotel'],
+   tbks:['d2train'],
    w:'🌦 คานาซาวา 20°/13°',
    quests:[
      {t:'ขึ้น Kagayaki 507 · รับตั๋วกระดาษที่ Eki-net ด้วย QR (2 ชม. 26 นาที)', time:'09:26-11:52'},
@@ -671,7 +822,7 @@ const DAYS = [
    w:'🌦 โทยามะ 23°/9°',
    quests:[
      {t:'ขับไปสถานีอูนาซูกิ (1 ชม.)', time:'08:30-09:30'},
-     {t:'คอขบวนที่ Unazuki — ซื้อตั๋วรอบเช้าคนน้อย', time:'09:30-10:00'},
+     {t:'คอยขบวนที่ Unazuki — ซื้อตั๋วรอบเช้าคนน้อย', time:'09:30-10:00'},
      {t:'รถไฟหุบเขาคุโรเบะ ➔ เคยากิไดระ (1 ชม. 20 นาที)', time:'10:00-11:20'},
      {t:'สะพานแดงโอกุคาเนะ + แช่เท้าออนเซ็น', time:'11:20-13:30'},
      {t:'รถไฟกลับ Unazuki (1 ชม. 20 นาที)', time:'13:30-14:50'},
@@ -711,6 +862,7 @@ const DAYS = [
    trans:'🚗 รถเช่า (ขับขึ้นเหนือหลังเที่ยง)',
    hotel:'🏨 Yukemurinosato Kashiwaya · 1 คืน',
    bks:['d8hotel'],
+   tbks:['d3car'],
    w:'☁️ ยูนิชิกาวะ 9°/1°',
    quests:[
      {t:'เช็กเอาท์ · ขับกลับโซนนิกโกะชั้นล่าง (25 นาที)', time:'10:00-10:25'},
@@ -725,6 +877,7 @@ const DAYS = [
    trans:'🚗 ทางด่วนกลับโตเกียว · คืนรถ Toyota Nihonbashi',
    hotel:'🏨 remm Tokyo Kyobashi · 1 คืน · Double + Economy Twin',
    bks:['d9hotel'],
+   tbks:['d3car'],
    w:'🌦 โตเกียว 14°/11°',
    quests:[
      {t:'เช็กเอาท์ Kashiwaya · ขับทางด่วนยิงยาวกลับโตเกียว (รวมแวะพัก 1 จุด)', time:'10:30-13:30'},
@@ -783,16 +936,66 @@ const PHR = [
   ['ขอโทษ / ขอรบกวน','すみません','สุมิมาเซ็น'],
   ['ห้องน้ำอยู่ไหน?','トイレはどこですか？','โทอิเระ วะ โดโกะ เดสกะ'],
   ['ราคาเท่าไหร่?','いくらですか？','อิคุระ เดสกะ'],
-  ['ไม่กินเนื้อวัว','牛肉は食べられません','กีวนิคุ วะ ทาเบราเรมาเซ็น'],
+  ['ไม่กินเนื้อวัว','牛肉は食べられません','กิวนิคุ วะ ทาเบราเรมาเซ็น'],
   ['ไม่กินเนื้อสัตว์ (กินปลา/อาหารทะเลได้)','肉は食べられません','นิคุ วะ ทาเบราเรมาเซ็น'],
   ['พาไปที่นี่ (ชี้ชื่อร้าน/แผนที่)','ここまでお願いします','โคโคะ มาเดะ โอเนงาอิชิมาสุ']
 ];
 
 /* ===== ห้องนิรภัยรหัสจอง — AES-GCM + PBKDF2 (รหัสจองไม่อยู่ในไฟล์แบบข้อความล้วน) ===== */
-const VAULT = {"v":1,"iters":400000,"salt":"MyTSZ5I3ntOTI9D7Vc8CwA==","iv":"Pn092HgsGq3voOHv","ct":"KrsZQVmI2NXHiRDUQBlPkoMfTSNjFXOoCqaQppcQHokIZOP9dGJPbgRzxluNcFmMBjqiNeLI/sprn0w451kARso1ubyxDT3CgiseyIedMSJ0NUWeBT/Yhrnj10o/++4ou3IA85AEdNMB/3LW06sR0c2VbIkv3UIup1IzxV3nnzQGNXffOwqd/YGTnRCdFfCkLH2hCoJsNtBxZnbjGpsd4IbvJeY30Ch82yDJOwPyHE5mR/xqsfuS38UceWRu4LvzwfJx1v2GBuQ0I6l4MAFyqk0OmzvOEkBT3zoSWi7tA951W50UmgYigMwZ7as3lUnTdWgxNiA/IFvPrDC5iwO4vnNpgGFDq/tfwzP2NlR6pTBQxjHxf33fzR1LWu8MirJBbk9V14aau6zGrnNC"};
+const VAULT = {"v":1,"iters":400000,"salt":"RNgZ8K/QGKcqUO/iCSlnEA==","iv":"gOeP8cDJPrbGFHLV","ct":"pmVoiYgWs8MRa5FAFSr16QBtOCSGd0TLySBOS6aR6m9vI4aiI86Nuyqt3WXIWzBwW1N8qzNeLtXniu+kNpxPDyMLcf7buneE4pYajA0t9bC4dhwWf+eMQvJ3LaPQT7xmsA1/v6wnJohE/wDqmQKuwmjswRfxYwI6lO8Dt2AToA1uWA9TfH/OTRZ2QFmSs+gOTo5xRHarxfZHwVai5Qw+VzHXSr4bj2C6XCVaOR7UAYjDsCMxS1j2yj/28p4T7QWgpFRG7JvryjJB2bTR5ehsn4R1rnnLCFA+LUGY6v7wLaaJL0nUzyT//gdiVn7ucq9FEJYBgsR6nLOPZI7OfzIWI4X0PBsjOcId1brtC0VU33X7CgW96wjK1tbOyLGYNZTY5e0nCCJnfukLGCB9cmltRTpI3fxByhlRGteW8xy0bBQdxBldTwFQxVmLpiIVpSn5D004/y4tRidWJ+JVqq10QTd2nlq/rKJrgSMjNLYPVGttk8m0LFqtZCL07UTGNnY6yrskmm/Al21oiA=="};
 const UNLOCK_KEY = 'chaokuay-unlock-v03';
 let BK = null;   /* แผนที่รหัสจองหลังถอดรหัสสำเร็จ */
 let unlockFails = 0;
+
+/* ===== ใบจองสำหรับหน้า D + ชิปรูป (v0.5) — หัวข้อไม่ลับ ตัวเลขจองอยู่ใน VAULT ===== */
+const DOCMETA = {
+  d1flight: {cat:'flight', icon:'✈️', label:'เที่ยวบินไป ANA NH806', sub:'26 ต.ค. · สุวรรณภูมิ 07:10 → นาริตะ T1 15:05'},
+  d1van:    {cat:'car',    icon:'🚐', label:'รถตู้รับส่วนตัว นาริตะ → โรงแรม', sub:'26 ต.ค. · รับหลังถึงนาริตะ (เที่ยวบิน NH806)'},
+  d1hotel:  {cat:'hotel',  icon:'🏨', label:'Mitsui Garden Hotel Ueno', sub:'26–27 ต.ค. · 2 ห้อง · โตเกียว'},
+  d2train:  {cat:'train',  icon:'🚄', label:'ชินคันเซ็น Kagayaki No.507', sub:'27 ต.ค. · อูเอโนะ 09:26 → คานาซาวา 11:52'},
+  d2hotel:  {cat:'hotel',  icon:'🏨', label:'Hotel Forza Kanazawa', sub:'27–29 ต.ค. · 2 ห้อง · คานาซาวา'},
+  d3car:    {cat:'car',    icon:'🚗', label:'รถเช่า TOYOTA Corolla Touring Hybrid', sub:'รับ 28 ต.ค. 09:30 คานาซาวา → คืน 3 พ.ย. 19:00 โตเกียว (one-way)'},
+  d4hotel:  {cat:'hotel',  icon:'🏨', label:'Hotel Enoe Toyama', sub:'29–31 ต.ค. · 2 ห้อง · โทยามะ (D5 พักที่นี่ด้วย)'},
+  d6hotel:  {cat:'hotel',  icon:'🏨', label:'Kusatsu Hotel 1913', sub:'31 ต.ค. · 2 ห้อง · คุซัทสึ (รวมค่ำ+เช้า)'},
+  d7hotel:  {cat:'hotel',  icon:'🏨', label:'Kinugawa Onsen Hotel', sub:'1 พ.ย. · 2 ห้อง · คินุกาวะ (รวมค่ำ+เช้า)'},
+  d8hotel:  {cat:'hotel',  icon:'🏨', label:'Yukemurinosato Kashiwaya', sub:'2 พ.ย. · 2 ห้อง · เรียวกังยูนิชิกาวะ'},
+  d9hotel:  {cat:'hotel',  icon:'🏨', label:'remm Tokyo Kyobashi', sub:'3 พ.ย. · 2 ห้อง · โตเกียว (Double + Economy Twin)'},
+  d10flight:{cat:'flight', icon:'✈️', label:'เที่ยวบินกลับ ANA NH805', sub:'4 พ.ย. · นาริตะ T1 18:55 → สุวรรณภูมิ 00:20 (ถึง 5 พ.ย.)'}
+};
+
+/* ===== รูปใบจองจริง — docs-pack.enc (AES-GCM เหมือนรหัสจอง, โหลดเฉพาะเมื่อต้องใช้) ===== */
+let DOCS = null;        /* manifest รูปใบจองหลังถอดรหัสสำเร็จ {key:{photos:[dataURI]}} */
+let PW_KEEP = null;     /* จำรหัสไว้ในหน่วยความจำเฉพาะการเปิดครั้งนี้ (ไม่บันทึกลงเครื่อง) */
+const idbOpen = () => new Promise((res, rej)=>{
+  const rq = indexedDB.open('chaokuay-docs-v05', 1);
+  rq.onupgradeneeded = ()=>{ try{ rq.result.createObjectStore('kv'); }catch(e){} };
+  rq.onsuccess = ()=> res(rq.result); rq.onerror = ()=> rej(rq.error);
+});
+async function idb(mode, val){
+  try{
+    const db = await idbOpen();
+    const tx = db.transaction('kv', mode === 'readonly' ? 'readonly' : 'readwrite');
+    const st = tx.objectStore('kv');
+    const op = mode === 'readonly' ? st.get('pack') : st.put(val, 'pack');
+    return await new Promise(res=>{ op.onsuccess = ()=> res(op.result); op.onerror = ()=> res(null); });
+  }catch(e){ return null; }
+}
+async function loadDocsPack(pw){
+  if(DOCS) return DOCS;
+  const cached = await idb('readonly');
+  if(cached){ DOCS = cached; window.__docsLoaded = true; return DOCS; }
+  if(!pw) return null;                     /* ไม่มีรหัสให้ถอด → ต้องใส่รหัสอีกครั้ง */
+  const raw = await (await fetch('docs-pack.enc')).text();
+  const meta = JSON.parse(raw);
+  const mat = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt:b64ToBuf(meta.salt), iterations:meta.iters, hash:'SHA-256'},
+    mat, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  DOCS = JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM', iv:b64ToBuf(meta.iv)}, key, b64ToBuf(meta.ct))));
+  idb('readwrite', DOCS);
+  window.__docsLoaded = true;
+  return DOCS;
+}
 
 function b64ToBuf(b){
   const s = atob(b), u = new Uint8Array(s.length);
@@ -812,9 +1015,15 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 function bkHTML(key){
   if(BK && BK[key]){
     const codes = String(BK[key]).split(' + ').map(c=>'<code>'+esc(c)+'</code>').join(' + ');
-    return '<span class="bk ok">จอง '+codes+'</span>';
+    return '<button class="bk ok" type="button" data-doc="'+esc(key)+'" aria-label="กดดูรูปใบจองจริง">📷 จอง '+codes+'</button>';
   }
   return '<button class="bk locked" type="button" data-bk="'+esc(key)+'" aria-label="ปลดล็อกรหัสจอง">จอง 🔒🔒🔒🔒</button>';
+}
+/* เลขจองแบบ span ธรรมดา (ใช้ใน doccard — ห้าม button ซ้อน button เบราว์เซอร์จะแตกออกเอง) */
+function bkCodes(key){
+  if(!BK || !BK[key]) return '';
+  const codes = String(BK[key]).split(' + ').map(c=>'<code>'+esc(c)+'</code>').join(' + ');
+  return '<span class="bk">📷 จอง '+codes+'</span>';
 }
 
 /* ===== ระบบยศ ===== */
@@ -911,7 +1120,7 @@ function renderDay(){
       '<p class="stage-sub">' + d.sub + '</p>' +
     '</div>' +
     '<div class="chips">' +
-      '<div class="chip"><b>' + d.trans + '</b></div>' +
+      '<div class="chip"><b>' + d.trans + '</b>' + (d.tbks && d.tbks.length ? ' ' + d.tbks.map(bkHTML).join(' ') : '') + '</div>' +
       '<div class="chip hotel">' + d.hotel +
         (d.bks && d.bks.length ? ' ' + d.bks.map(bkHTML).join(' ') : '') + '</div>' +
       '<div class="chip">' + d.w + '</div>' +
@@ -933,13 +1142,13 @@ function renderDay(){
     '</div>' +
     '<div class="day-nav">' +
       '<button class="chunk" id="prevB"'+(d.n===1?' disabled':'')+'>◀ วันก่อนหน้า</button>' +
-      '<button class="chunk home" id="homeB">🏠 หน้าปก</button>' +
+      '<button class="chunk home" id="homeB">🏛 เมนุ</button>' +
       '<button class="chunk" id="nextB"'+(d.n===10?' disabled':'')+'>วันถัดไป ▶</button>' +
     '</div>';
   updateDayStatus();
   $('prevB').addEventListener('click', ()=> setDay(S.day-1));
   $('nextB').addEventListener('click', ()=> setDay(S.day+1));
-  $('homeB').addEventListener('click', ()=> enterHome());
+  $('homeB').addEventListener('click', ()=> enterMenu());
   if(!pageInner.classList.contains('flip')){
     pageInner.classList.add('flip');
     setTimeout(()=> pageInner.classList.remove('flip'), 300);
@@ -1002,10 +1211,12 @@ async function doUnlock(){
   $('unlockErr').textContent = 'กำลังตรวจรหัส…';
   try{
     BK = await tryUnlock(pw);
+    PW_KEEP = pw;
     try{ localStorage.setItem(UNLOCK_KEY, JSON.stringify(BK)); }catch(e){}
     closeUnlock();
-    if(!game.hidden) setDay(S.day); else enterHome();
-    showToast('🔓 ปลดล็อกรหัสจองสำเร็จ!');
+    if(!game.hidden) setDay(S.day); else enterMenu();
+    showToast('🔓 ปลดล็อกสำเร็จ! กำลังโหลดรูปใบจอง…');
+    loadDocsPack(pw).catch(()=>{ showToast('โหลดรูปใบจองไม่ได้ — ต่อเน็ตครั้งหน้า (รหัสจองใช้ได้อยู่)'); });
   }catch(err){
     unlockFails++;
     if(err && err.message === 'NO_SUBTLE'){
@@ -1026,7 +1237,7 @@ $('pwShow').addEventListener('click', ()=>{
   $('pwShow').textContent = pwInput.type === 'password' ? '👁 แสดงรหัส' : '🙈 ซ่อนรหัส';
 });
 $('skipUnlock').addEventListener('click', ()=>{
-  closeUnlock(); enterHome();
+  closeUnlock(); enterMenu();
   showToast('รหัสจองยังถูกซ่อน — กดปุ่ม 🔒 เพื่อปลดล็อกได้ทุกเมื่อ');
 });
 
@@ -1034,27 +1245,25 @@ $('skipUnlock').addEventListener('click', ()=>{
 const homeEl = $('home'), homeCards = $('homeCards'), jumpbar = $('jumpbar');
 function buildJumpbar(){
   jumpbar.innerHTML = '';
+  const add = (txt, cls, cb, n)=>{
+    const b = document.createElement('button');
+    b.className = 'jb' + (cls ? ' ' + cls : '');
+    b.textContent = txt;
+    if(n != null) b.dataset.n = n;
+    b.addEventListener('click', cb);
+    jumpbar.appendChild(b);
+    return b;
+  };
+  add('🏛 เมนุ', 'mode', ()=> enterMenu());
   DAYS.forEach(d=>{
     const col = CITIES[d.col];
-    const b = document.createElement('button');
-    b.className = 'jb'; b.style.setProperty('--c', col.c); b.style.setProperty('--on', col.on);
-    b.textContent = 'D' + d.n; b.title = 'วัน ' + d.n + ' · ' + d.city;
-    b.addEventListener('click', ()=> gotoDay(d.n));
-    jumpbar.appendChild(b);
+    const btn = add('D' + d.n, null, ()=> gotoDay(d.n), d.n);
+    btn.style.setProperty('--c', col.c); btn.style.setProperty('--on', col.on);
   });
-  const bk = document.createElement('button');
-  bk.className = 'jb know'; bk.textContent = '🇯🇵 ไม่งง';
-  bk.title = 'อากาศ · เงิน · คำญี่ปุ่น';
-  bk.addEventListener('click', ()=> gotoDay('know'));
-  jumpbar.appendChild(bk);
-  const bp = document.createElement('button');
-  bp.className = 'jb pack'; bp.textContent = '🎒 เช็คลิสต์';
-  bp.addEventListener('click', ()=> gotoDay('pack'));
-  jumpbar.appendChild(bp);
-  const bg = document.createElement('button');
-  bg.className = 'jb mode'; bg.textContent = '🎮 เกม';
-  bg.addEventListener('click', ()=> enterGame());
-  jumpbar.appendChild(bg);
+  add('🇯🇵 ไม่งง', 'mode', ()=> enterKnow());
+  add('🎒 ห้ามลืม', 'mode', ()=> enterPack());
+  add('🗂 ใบจอง', 'mode', ()=> enterDocs());
+  add('🎮 เกม', 'mode', ()=> enterGame());
 }
 function renderHome(){
   $('homeSub').textContent = BK
@@ -1072,7 +1281,7 @@ function renderHome(){
         '<div><h3>'+d.city+'</h3><span class="sub">'+d.sub+'</span></div>' +
       '</div>' +
       '<div class="chips">' +
-        '<div class="chip"><b>'+d.trans+'</b></div>' +
+        '<div class="chip"><b>'+d.trans+'</b>'+(d.tbks&&d.tbks.length?' '+d.tbks.map(bkHTML).join(' '):'')+'</div>' +
         '<div class="chip hotel">'+d.hotel+(d.bks&&d.bks.length?' '+d.bks.map(bkHTML).join(' '):'')+'</div>' +
         '<div class="chip">'+d.w+'</div>' +
       '</div>' +
@@ -1082,54 +1291,160 @@ function renderHome(){
       (m ? '<div class="mealbox"><span class="fe">'+m.e+'</span><div><b>🍽 '+m.t+'</b><span>'+m.s+'</span>' +
           (m.nb?'<span class="nobook">⚠ ยังไม่ได้จอง — '+m.nb+'</span>':'') + '</div></div>' : '') +
     '</article>';
-  }).join('') +
-  '<article class="knowcard" id="hdknow">' +
-    '<h3>🇯🇵 ญี่ปุ่นไม่งง</h3>' +
-    '<p class="sub">ของที่ควรรู้ติดกระเป๋า — กวาดตาเดียวจบ</p>' +
-    '<div class="know-grid">' +
-      '<div class="know-block"><h4>🌦 อากาศรวม 10 วัน</h4><div class="wstrip">' + DAYS.map(wchip).join('') + '</div>' +
-        '<p class="note">เย็นสุดที่ยูนิชิกาวะ 1°C ยามเช้า — เสื้อกันหนาวถึงจริง 🥶</p></div>' +
-      '<div class="know-block"><h4>💴 เงินเยน คิดในใจ</h4>' +
-        '<div class="rate-rule">เห็นราคาเยน ➔ หาร 5 = เงินไทย</div>' +
-        '<span id="homeRate">อัตราค่าฝังไฟล์: 100¥ ≈ ฿21.25 — มีเน็ตจะดึงอัตราสดให้เอง</span>' +
-        '<p class="note">1,000¥ ≈ ฿200 · 5,000¥ ≈ ฿1,000 · 10,000¥ ≈ ฿2,000 (ได้น้อยกว่าจริงนิดหน่อย = กันเผื่อ ไม่ตกใช้)</p></div>' +
-      '<div class="know-block wide"><h4>🗣 คำญี่ปุ่นชี้ชัด</h4>' +
-        '<div class="phr"><span class="h">ภาษาไทย</span><span class="h">ญี่ปุ่น (ชี้ให้เขาอ่าน)</span><span class="h">อ่านว่า</span>' +
-        PHR.map(p=>'<span class="th">'+p[0]+'</span><span class="jp">'+p[1]+'</span><span class="rd">'+p[2]+'</span>').join('') +
-        '</div><p class="note">เคล็ด: ชี้ประโยคภาษาญี่ปุ่นให้คนญี่ปุ่นอ่านตรง ๆ ง่ายสุด</p></div>' +
-      '<div class="know-block wide facts">🚨 ฉุกเฉิน ตำรวจ <b>110</b> · รถพยาบาล/ไฟไหม้ <b>119</b> &nbsp;·&nbsp; ⏰ เวลาญี่ปุ่นเร็วกว่าไทย <b>2 ชม.</b> &nbsp;·&nbsp; 🔌 ปลั๊กแบนสองขา 100V &nbsp;·&nbsp; 💁 ญี่ปุ่นไม่รับทิป</div>' +
-    '</div>' +
-  '</article>' +
-  '<article class="packcard" id="hdpack">' +
-    '<h3>🎒 เช็คลิสต์ก่อนเดินทาง</h3>' +
-    '<p class="sub">น้องเฉาก๊วยจัดมาให้เอง 🐈‍⬛ — ติ๊กได้เลย (ไม่นับ XP เกม แค่จำในเครื่องนี้)</p>' +
-    PACK.map((p,i)=>
-      '<label class="packrow"><input type="checkbox" data-p="'+i+'"'+(S.pack[i]?' checked':'')+'>' +
-      '<span class="qbox" aria-hidden="true"></span><span class="ptext">'+p.t+'</span></label>'
-    ).join('') +
-  '</article>';
+  }).join('');
+}
+/* ---------- หน้า C ญี่ปุ่นไม่งง + หน้า 🎒 ห้ามลืมก่อนบิน (ย้ายมาจากหน้าแผน v0.5) ---------- */
+function renderKnow(){
+  const wchip = d => {
+    const m = d.w.match(/^(\S+)\s+(.+?)\s+(\S+)°\/(\S+)°$/);
+    return '<span class="wchip" title="'+esc(m[2])+'"><b>D'+d.n+'</b> '+m[1]+' '+m[3]+'°/'+m[4]+'°</span>';
+  };
+  knowInner.innerHTML =
+    '<article class="knowcard">' +
+      '<h3>🇯🇵 ญี่ปุ่นไม่งง</h3>' +
+      '<p class="sub">ของที่ควรรู้ติดกระเป๋า — กวาดตาเดียวจบ</p>' +
+      '<div class="know-grid">' +
+        '<div class="know-block"><h4>🌦 อากาศรวม 10 วัน</h4><div class="wstrip">' + DAYS.map(wchip).join('') + '</div>' +
+          '<p class="note">เย็นสุดที่ยูนิชิกาวะ 1°C ยามเช้า — เสื้อกันหนาวถึงจริง 🥶</p></div>' +
+        '<div class="know-block"><h4>💴 เงินเยน คิดในใจ</h4>' +
+          '<div class="rate-rule">เห็นราคาเยน ➔ หาร 5 = เงินไทย</div>' +
+          '<span id="homeRate">อัตราค่าฝังไฟล์: 100¥ ≈ ฿21.25 — มีเน็ตจะดึงอัตราสดให้เอง</span>' +
+          '<p class="note">1,000¥ ≈ ฿200 · 5,000¥ ≈ ฿1,000 · 10,000¥ ≈ ฿2,000 (ได้น้อยกว่าจริงนิดหน่อย = กันเผื่อ ไม่ตกใช้)</p></div>' +
+        '<div class="know-block wide"><h4>🗣 คำญี่ปุ่นชี้ชัด</h4>' +
+          '<div class="phr"><span class="h">ภาษาไทย</span><span class="h">ญี่ปุ่น (ชี้ให้เขาอ่าน)</span><span class="h">อ่านว่า</span>' +
+          PHR.map(p=>'<span class="th">'+p[0]+'</span><span class="jp">'+p[1]+'</span><span class="rd">'+p[2]+'</span>').join('') +
+          '</div><p class="note">เคล็ด: ชี้ประโยคภาษาญี่ปุ่นให้คนญี่ปุ่นอ่านตรง ๆ ง่ายสุด</p></div>' +
+        '<div class="know-block wide facts">🚨 ฉุกเฉิน ตำรวจ <b>110</b> · รถพยาบาล/ไฟไหม้ <b>119</b> &nbsp;·&nbsp; ⏰ เวลาญี่ปุ่นเร็วกว่าไทย <b>2 ชม.</b> &nbsp;·&nbsp; 🔌 ปลั๊กแบนสองขา 100V &nbsp;·&nbsp; 💁 ญี่ปุ่นไม่รับทิป</div>' +
+      '</div>' +
+    '</article>';
+}
+function renderPack(){
+  packInner.innerHTML =
+    '<article class="packcard">' +
+      '<h3>🎒 ห้ามลืมก่อนบิน</h3>' +
+      '<p class="sub">น้องเฉาก๊วยจัดมาให้เอง 🐈‍⬛ — ติ๊กได้เลย (ไม่นับ XP เกม แค่จำในเครื่องนี้)</p>' +
+      PACK.map((p,i)=>
+        '<label class="packrow"><input type="checkbox" data-p="'+i+'"'+(S.pack[i]?' checked':'')+'>' +
+        '<span class="qbox" aria-hidden="true"></span><span class="ptext">'+p.t+'</span></label>'
+      ).join('') +
+    '</article>';
 }
 function gotoDay(n){
-  const el = document.getElementById(n==='pack'?'hdpack':(n==='know'?'hdknow':'hd'+n));
+  const el = $('hd'+n);
   if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
-  const idx = n==='pack' ? 11 : (n==='know' ? 10 : (n-1));
-  [...jumpbar.querySelectorAll('.jb')].forEach((b,i)=> b.classList.toggle('cur', i === idx));
+  [...jumpbar.querySelectorAll('.jb')].forEach(b=> b.classList.toggle('cur', +b.dataset.n === n));
 }
-function enterHome(){
-  cover.hidden = true; game.hidden = true; homeEl.hidden = false;
-  renderHome();
+
+/* ===== ตัวจัดการหน้าทั้งหมด (v0.5): ปก → เมนุยักษ์ → A/B/C/🎒/D ===== */
+const menuEl = $('menu'), knowEl = $('know'), knowInner = $('knowInner');
+const packEl = $('pack'), packInner = $('packInner');
+const docsEl = $('docs'), docsInner = $('docsInner'), viewerEl = $('viewer');
+const PAGES = {cover:cover, game:game, home:homeEl, menu:menuEl, know:knowEl, pack:packEl, docs:docsEl};
+function showPage(el){
+  Object.values(PAGES).forEach(p=> p.hidden = (p !== el));
   window.scrollTo(0,0);
 }
+function enterMenu(){ showPage(PAGES.menu); }
+function enterHome(){ showPage(PAGES.home); renderHome(); }
+function enterGame(){ showPage(PAGES.game); setDay(S.day); }
+function enterKnow(){ showPage(PAGES.know); renderKnow(); }
+function enterPack(){ showPage(PAGES.pack); renderPack(); }
+function enterDocs(){ showPage(PAGES.docs); renderDocs(); }
 $('toGameBtn').addEventListener('click', ()=> enterGame());
-homeCards.addEventListener('change', e=>{
+$('toMenuBtn').addEventListener('click', ()=> enterMenu());
+$('secMenuBtn').addEventListener('click', ()=> enterMenu());
+$('packMenuBtn').addEventListener('click', ()=> enterMenu());
+$('docsMenuBtn').addEventListener('click', ()=> enterMenu());
+$('tileA').addEventListener('click', ()=> enterHome());
+$('tileB').addEventListener('click', ()=> enterGame());
+$('tileC').addEventListener('click', ()=> enterKnow());
+$('tileD').addEventListener('click', ()=> enterDocs());
+$('tileP').addEventListener('click', ()=> enterPack());
+packInner.addEventListener('change', e=>{
   if(e.target && e.target.matches('input[type="checkbox"]')){
     S.pack[+e.target.dataset.p] = e.target.checked; save();
   }
 });
 homeCards.addEventListener('click', e=>{
-  const b = e.target.closest('.bk.locked');
-  if(b) openUnlock();
+  const ok = e.target.closest('.bk.ok');
+  if(ok) openDoc(ok.dataset.doc);
+  const lk = e.target.closest('.bk.locked');
+  if(lk) openUnlock();
 });
+
+/* ===== หน้า D เอกสารสำคัญ + ตัวดูรูปใบจองจริง ===== */
+const DOC_CATS = [
+  {id:'flight', t:'✈️ ใบจองเครื่องบิน'},
+  {id:'train',  t:'🚄 ใบจองรถไฟ'},
+  {id:'hotel',  t:'🏨 ใบจองที่พัก'},
+  {id:'car',    t:'🚐 รถ — เช่ารถ + รถตู้รับส่ง'}
+];
+function renderDocs(){
+  if(!BK){
+    docsInner.innerHTML = '<div class="knowcard" style="text-align:center"><h3>🔐 เอกสารสำคัญล็อกอยู่</h3>' +
+      '<p class="sub">ใบจองเป็นของครอบครัว — กรอกรหัสลับเพื่อเปิดดู</p>' +
+      '<button id="docsUnlockBtn" type="button" style="cursor:pointer; font-family:var(--head); font-size:18px; color:#fff; background:var(--game-red); border:3px solid var(--ink); border-radius:14px; box-shadow:4px 4px 0 var(--ink); padding:13px 26px">🔓 กรอกรหัสลับครอบครัว</button></div>';
+    $('docsUnlockBtn').addEventListener('click', openUnlock);
+    return;
+  }
+  const pcs = !DOCS ? '<p class="bonus-hint" style="margin:0 0 12px">📷 รูปใบจองจะโหลดอัตโนมัติหลังปลดล็อก (ครั้งแรกต้องต่อเน็ต แล้วจำไว้ในเครื่อง)</p>' : '';
+  docsInner.innerHTML = pcs + DOC_CATS.map(c=>{
+    const items = Object.keys(DOCMETA).filter(k=> DOCMETA[k].cat === c.id);
+    return '<h3 class="doccat-t">'+c.t+' <span class="bonus-hint">('+items.length+' ใบ)</span></h3>' +
+      items.map(k=>{
+        const b = DOCMETA[k], p = (DOCS && DOCS[k] && DOCS[k].photos) ? DOCS[k].photos.length : 0;
+        return '<button class="doccard" type="button" data-doc="'+k+'">' +
+          '<span class="ic">'+b.icon+'</span>' +
+          '<span class="dc"><b>'+b.label+'</b><span class="dsub">'+b.sub+'</span>' +
+          '<span class="codes">'+bkCodes(k)+'</span></span>' +
+          '<span class="thumbs"><span class="tn">📷'+(p ? p : '')+'</span></span>' +
+        '</button>';
+      }).join('');
+  }).join('') +
+  '<h3 class="doccat-t">⏳ ยังไม่มีใบจอง — รอของเพิ่ม</h3>' +
+    '<button class="doccard hold" type="button"><span class="ic">🚌</span><span class="dc"><b>บัสสนามบิน Noriba (โตเกียว → นาริตะ)</b><span class="dsub nobook">4 พ.ย. · ยังไม่มีใบจอง — ซื้อหน้างาน หรือรอใบจองมาเติม</span></span></button>' +
+    '<button class="doccard hold" type="button"><span class="ic">🛂</span><span class="dc"><b>พาสปอร์ต 4 เล่ม + ใบอนุญาตขับขี่ (IDP)</b><span class="dsub nobook">รอสแกนเพื่อเก็บลงแอป — ถ้าพกของจริงก็พอแล้ว</span></span></button>';
+}
+docsInner.addEventListener('click', e=>{
+  const c = e.target.closest('.doccard[data-doc]');
+  if(c) openDoc(c.dataset.doc);
+});
+
+/* ===== ตัวดูรูปใบจองจริง ===== */
+let vEntry = null, vList = [], vIdx = 0;
+function showPhoto(){
+  $('vImg').src = vList[vIdx];
+  $('vCount').textContent = (vIdx+1) + ' / ' + vList.length;
+  $('vMeta').textContent = vEntry.icon + ' ' + vEntry.label + ' · ' + vEntry.sub;
+  $('vPrev').disabled = vIdx === 0;
+  $('vNext').disabled = vIdx === vList.length-1;
+}
+async function openDoc(key){
+  const b = DOCMETA[key];
+  if(!b) return;
+  if(!BK){ openUnlock(); showToast('รูปใบจอง — ปลดล็อกด้วยรหัสครอบครัวก่อนนะ 🔐'); return; }
+  if(!DOCS){
+    try{
+      const cached = await loadDocsPack(null);        /* มี cache ในเครื่อง → ใช้เลย ไม่ต้องใส่รหัสใหม่ */
+      if(!cached){
+        if(PW_KEEP){ showToast('กำลังโหลดรูปใบจอง… เดี๋ยวนะ'); await loadDocsPack(PW_KEEP); }
+        else{ openUnlock(); showToast('ใส่รหัสอีกครั้ง เพื่อโหลดรูปใบจอง (โหลดแล้วจำไว้ในเครื่อง)'); return; }
+      }
+    }catch(e){
+      showToast('โหลดรูปไม่ได้ — ต่อเน็ตแล้วกดอีกที (เลขจองยังอ่านได้อยู่)');
+      return;
+    }
+  }
+  const entry = DOCS[key];
+  if(!entry || !entry.photos || !entry.photos.length){ showToast('รูปใบจองชุดนี้ยังไม่มีในแพ็ค'); return; }
+  vEntry = b; vList = entry.photos; vIdx = 0;
+  $('vTitle').textContent = b.icon + ' ' + b.label;
+  viewerEl.hidden = false;
+  showPhoto();
+}
+$('vClose').addEventListener('click', ()=> viewerEl.hidden = true);
+$('vPrev').addEventListener('click', ()=>{ if(vIdx > 0){ vIdx--; showPhoto(); } });
+$('vNext').addEventListener('click', ()=>{ if(vIdx < vList.length-1){ vIdx++; showPhoto(); } });
 
 /* ===== ปก / เริ่มเกม ===== */
 function showCover(){ game.hidden = true; homeEl.hidden = true; cover.hidden = false; }
@@ -1140,7 +1455,7 @@ function enterGame(){
 }
 function startGame(){
   if(unlockEl.hidden === false) return;   /* กันสอง event ซ้อน */
-  if(BK) enterHome(); else openUnlock();
+  if(BK) enterMenu(); else openUnlock();
 }
 $('startBtn').addEventListener('click', startGame);
 
@@ -1151,6 +1466,8 @@ pageInner.addEventListener('change', e=>{
   }
 });
 pageInner.addEventListener('click', e=>{
+  const ok = e.target.closest('.bk.ok');
+  if(ok) openDoc(ok.dataset.doc);
   const b = e.target.closest('.bk.locked');
   if(b) openUnlock();
 });
@@ -1167,6 +1484,12 @@ fontFab.addEventListener('click', ()=>{
 
 /* ===== คีย์บอร์ด ← → เลื่อนวัน ===== */
 document.addEventListener('keydown', e=>{
+  if(!viewerEl.hidden){
+    if(e.key === 'Escape') viewerEl.hidden = true;
+    if(e.key === 'ArrowRight') $('vNext').click();
+    if(e.key === 'ArrowLeft') $('vPrev').click();
+    return;
+  }
   if(game.hidden) return;
   if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
   if(e.key === 'ArrowRight') setDay(S.day + 1);
@@ -1186,7 +1509,13 @@ $('resetB').addEventListener('click', ()=>{
 /* ===== เริ่มต้น ===== */
 try{
   const cached = localStorage.getItem(UNLOCK_KEY);
-  if(cached){ BK = JSON.parse(cached); }
+  if(cached){
+    BK = JSON.parse(cached);
+    /* BK เก่าจาก v0.4 ไม่มี 3 คีย์ใหม่ → บังคับปลดล็อกใหม่ครั้งเดียวเพื่อดึงชุดเต็ม */
+    if(typeof DOCMETA !== 'undefined'){
+      for(const k in DOCMETA){ if(!(k in BK)){ BK = null; break; } }
+    }
+  }
 }catch(e){}
 DAYS.forEach(d=>{ if(dayFull(d)) d._cheered = true; });
 applyFS(); buildTabs(); renderHUD(); buildJumpbar();
