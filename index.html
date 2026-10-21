@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.3)</title>
+<!-- 004-arcade-stage · v0.3 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
+     โครงมาจาก mockup 002 (สมุดแท็บรายวัน) + ชุดเกม: HUD ยศ/XP · ปุ่มอาร์เคดขอบหนา · แมวนำทาง "น้องเฉาก๊วย"
+     v0.3: ข้อมูล sync v4.1 (ตาราง start–end + ระยะเดินทาง · มื้อยังไม่ได้จอง · กิโมโน D10 · บัส 14:30-16:05)
+           + รหัสจองย้ายเข้า "ห้องนิรภัย" — เข้ารหัส AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
+           รหัสจองไม่มีอยู่ในไฟล์แบบข้อความล้วน — ปลอดภัยเมื่อโฮสต์เป็นลิงก์สาธารณะ (ส่งไลน์ได้)
+     ฟอนต์ CDN ได้เฉพาะ mockup (แอปจริงห้าม CDN — ต้องฝัง base64 ตอนยกไปใช้) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Itim&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#f7f0e1; --paper:#fdfaf1; --cover:#f2e7cf;
+  --ink:#2b2b33; --ink-soft:#6d6357; --line:#ece1c8; --hole:#d9c9a8; --margin-red:#e3b0a6;
+  --red:#c2503c; --game-red:#e8485f; --gold:#f2c230;
+  --chip-bg:#fffdf6;
+  --shadow-hard:4px 4px 0 rgba(43,43,51,.92);
+  --head:'Itim',cursive; --body:'IBM Plex Sans Thai Looped',sans-serif;
+  --jp:'Hiragino Kaku Gothic ProN','Yu Gothic UI','Yu Gothic','Meiryo',sans-serif;
+  font-size:18px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; color:var(--ink); font-family:var(--body); line-height:1.45;
+  background:var(--ground);
+  background-image:radial-gradient(rgba(194,80,60,.075) 1.4px, transparent 1.6px);
+  background-size:24px 24px;
+  text-wrap:pretty;
+}
+:focus-visible{outline:3px dashed var(--red); outline-offset:3px; border-radius:6px}
+button{font:inherit; color:inherit}
+
+/* ---------- ปุ่ม A สลับขนาดตัวอักษร (ทุกหน้า) ---------- */
+#fontFab{
+  position:fixed; top:max(10px, env(safe-area-inset-top)); right:12px; z-index:300;
+  width:54px; height:54px; border-radius:14px; cursor:pointer;
+  background:var(--chip-bg); border:3px solid var(--ink); box-shadow:var(--shadow-hard);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--head); line-height:1;
+}
+#fontFab:active{transform:translate(3px,3px); box-shadow:1px 1px 0 rgba(43,43,51,.92)}
+
+/* ---------- หน้าปกเกม ---------- */
+#cover{min-height:100dvh; display:grid; place-items:center; padding:24px 16px 40px}
+.cover-card{
+  width:min(600px,100%); background:var(--cover);
+  border:3px solid var(--ink); border-radius:22px; box-shadow:8px 8px 0 rgba(43,43,51,.9);
+  padding:30px 24px 26px; text-align:center; transform:rotate(-.5deg); position:relative;
+}
+.kana-badge{
+  position:absolute; top:-16px; right:18px; transform:rotate(4deg);
+  font-family:var(--jp); font-size:14px; font-weight:700;
+  background:var(--game-red); color:#fff; border:3px solid var(--ink);
+  border-radius:999px; padding:4px 14px; letter-spacing:2px;
+}
+@media (max-width:520px){
+  .kana-badge{left:16px; right:auto; transform:rotate(-4deg)}
+}
+.logo{font-family:var(--head); font-size:clamp(40px,9vw,58px); line-height:1.05; margin:6px 0 2px; letter-spacing:1px}
+.logo .r{color:var(--game-red); text-shadow:2.5px 2.5px 0 var(--ink)}
+.logo .k{color:var(--ink); text-shadow:2.5px 2.5px 0 rgba(242,194,48,.9)}
+.logo-sub{font-family:var(--head); font-size:17px; color:var(--ink-soft); margin:0 0 4px}
+.cover-cat{width:min(230px,58%); margin:4px auto 0; display:block}
+.cover-cat .tail{transform-origin:178px 168px; animation:wag 3.4s ease-in-out infinite alternate}
+@keyframes wag{from{transform:rotate(-7deg)} to{transform:rotate(9deg)}}
+.stat-chips{display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0 6px}
+.stat-chip{
+  background:var(--chip-bg); border:2.5px solid var(--ink); border-radius:999px;
+  padding:7px 13px; font-size:15px; font-weight:600;
+}
+.route-dots{display:flex; flex-wrap:wrap; gap:5px 10px; justify-content:center; align-items:center; margin:10px 0 16px; font-size:12.5px; color:var(--ink-soft)}
+.route-dots .rd{width:13px; height:13px; border-radius:50%; border:2.5px solid var(--ink); display:inline-block}
+.start-wrap{position:relative; margin-top:10px}
+#startBtn{
+  width:100%; cursor:pointer; font-family:var(--head); font-size:24px; color:#fff;
+  background:var(--game-red); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:6px 6px 0 var(--ink); padding:17px 12px 15px; letter-spacing:.5px;
+}
+#startBtn small{display:block; font-family:var(--jp); font-size:12px; letter-spacing:4px; opacity:.9; font-weight:700}
+#startBtn:active{transform:translate(5px,5px); box-shadow:1px 1px 0 var(--ink)}
+.cover-hint{font-size:14.5px; color:var(--ink-soft); margin:14px 0 0}
+.cover-foot{margin-top:14px; font-size:12.5px; color:var(--ink-soft)}
+.cover-foot button{background:none; border:none; text-decoration:underline; cursor:pointer; color:var(--ink-soft); font-size:12.5px; padding:2px}
+
+/* ---------- จอเกม ---------- */
+#game{padding:10px 12px 46px}
+#hud{
+  position:sticky; top:8px; z-index:120; transform:rotate(-.4deg);
+  display:flex; align-items:center; gap:10px;
+  background:var(--chip-bg); border:3px solid var(--ink); border-radius:16px;
+  box-shadow:5px 5px 0 rgba(43,43,51,.92); padding:9px 12px;
+  max-width:1040px; margin:0 auto 12px;
+}
+.hud-cat{flex:0 0 auto; width:46px; height:42px}
+.rank-badge{
+  flex:0 0 auto; width:46px; height:46px; border:3px solid var(--ink); border-radius:11px;
+  background:var(--game-red); color:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:var(--head); font-size:17px; line-height:1.05; text-align:center;
+}
+.rank-block{flex:1 1 auto; min-width:0}
+.rank-name{font-family:var(--head); font-size:16px; line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.xp-bar{height:14px; margin-top:4px; background:#efe6d2; border:2.5px solid var(--ink); border-radius:999px; overflow:hidden}
+.xp-fill{height:100%; width:0%; background:var(--game-red); border-radius:999px; transition:width .35s ease}
+.xp-text{font-size:12px; color:var(--ink-soft); margin-top:3px}
+#combo{
+  position:absolute; right:10px; bottom:-15px; transform:rotate(3deg) scale(.8);
+  background:var(--gold); border:2.5px solid var(--ink); border-radius:999px;
+  font-family:var(--head); font-size:14px; padding:2px 11px;
+  opacity:0; transition:opacity .25s ease, transform .25s ease; pointer-events:none;
+}
+#combo.show{opacity:1; transform:rotate(3deg) scale(1)}
+
+/* ---------- สมุดแท็บ ---------- */
+#book{max-width:1080px; margin:0 auto}
+#page{
+  position:relative; background:var(--paper);
+  border:3px solid var(--ink); border-radius:6px 18px 18px 6px;
+  box-shadow:8px 8px 0 rgba(43,43,51,.85);
+  padding:24px 18px 22px 46px; min-height:70vh;
+}
+#page::before{ /* เส้นมาร์จิ้นแดง */
+  content:''; position:absolute; left:34px; top:0; bottom:0; width:2px; background:var(--margin-red);
+}
+#page::after{ /* รูเจาะสมุด */
+  content:''; position:absolute; left:9px; top:0; bottom:0; width:20px;
+  background-image:radial-gradient(circle 6px at 10px 24px, var(--hole) 5.5px, transparent 6.5px);
+  background-size:20px 64px; background-repeat:repeat-y;
+}
+.page-inner{position:relative; background-image:repeating-linear-gradient(transparent 0 39px, rgba(43,43,51,.055) 39px 40px)}
+.page-inner.flip{animation:flip .28s ease}
+@keyframes flip{from{transform:perspective(900px) rotateY(9deg); opacity:.35} to{transform:none; opacity:1}}
+
+/* แท็บวัน — มือถือ: แถบเลื่อนแนวนอน */
+#tabs{
+  display:flex; gap:7px; overflow-x:auto; padding:6px 12px 12px;
+  -webkit-overflow-scrolling:touch; scrollbar-width:thin;
+}
+.tab{
+  position:relative; flex:0 0 auto; min-width:82px; height:66px; cursor:pointer;
+  border:3px solid var(--ink); border-radius:12px; background:var(--c); color:var(--on);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0;
+  font-family:var(--head); transition:transform .18s ease, box-shadow .18s ease;
+  box-shadow:2px 2px 0 rgba(43,43,51,.75); padding:4px 8px;
+}
+.tab .n{font-size:20px; line-height:1}
+.tab .city{font-size:11.5px; font-weight:600; line-height:1.2}
+.tab[aria-current="true"]{transform:translateY(-6px); box-shadow:4px 6px 0 rgba(43,43,51,.92)}
+.tab.done::after{
+  content:'✓'; position:absolute; top:-8px; right:-6px; width:23px; height:23px;
+  background:#fffdf6; border:2.5px solid var(--ink); border-radius:999px;
+  display:flex; align-items:center; justify-content:center; font-size:13px; font-family:var(--head);
+}
+
+/* หัวสเตจ */
+.stage-head{
+  border:3px solid var(--ink); border-radius:16px; padding:13px 15px 12px;
+  background:color-mix(in srgb, var(--c) 13%, #fffdf6);
+  box-shadow:4px 4px 0 rgba(43,43,51,.88); transform:rotate(.25deg); margin-bottom:12px;
+}
+.kana-tag{
+  display:inline-block; font-family:var(--jp); font-size:12px; font-weight:700; letter-spacing:2px;
+  background:var(--c); color:var(--on); border:2.5px solid var(--ink); border-radius:999px;
+  padding:2px 11px; transform:rotate(-2deg); margin-bottom:6px;
+}
+.stage-row{display:flex; align-items:baseline; gap:10px; flex-wrap:wrap}
+.stage-no{
+  font-family:var(--head); font-size:14px; letter-spacing:1.5px;
+  background:var(--c); color:var(--on); border:2.5px solid var(--ink); border-radius:8px; padding:2px 9px;
+}
+.stage-row h2{font-family:var(--head); font-size:30px; margin:0; line-height:1.15}
+.stage-sub{margin:5px 0 0; font-size:15px; color:var(--ink-soft); font-weight:500}
+
+/* ชิปข้อมูลจริง */
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 12px}
+.chip{
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; background:var(--chip-bg);
+  border:2.5px solid var(--ink); border-radius:12px; padding:8px 12px; font-size:14.5px; font-weight:500;
+}
+.chip.hotel{flex-basis:100%}
+.chip b{font-weight:600}
+
+/* รหัสจอง — ปลดล็อกแล้ว: โค้ดอ่านง่าย / ยังล็อก: ปุ่มกดปลดล็อก */
+.bk{
+  display:inline-flex; align-items:center; gap:5px;
+  border:2px solid var(--ink); border-radius:9px; padding:1px 8px;
+  font-size:13.5px; font-weight:600; background:#fff;
+}
+.bk code{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; font-weight:700; color:var(--ink); word-break:break-all}
+.bk.locked{
+  cursor:pointer; border-style:dashed;
+  background:color-mix(in srgb, var(--gold) 30%, #fffdf6);
+  font-family:var(--head); font-weight:400;
+}
+.bk.locked:active{transform:translateY(1.5px)}
+
+/* ภารกิจ */
+.prog-row{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; margin:2px 0 10px}
+#dayProg{font-family:var(--head); font-size:16.5px}
+.bonus-hint{font-size:13px; color:var(--ink-soft)}
+.quests{display:grid; gap:9px}
+.quest{
+  display:flex; gap:11px; align-items:center; cursor:pointer; position:relative;
+  background:var(--chip-bg); border:2.5px solid var(--ink); border-radius:14px;
+  padding:10px 12px; min-height:62px; box-shadow:3px 3px 0 rgba(43,43,51,.16);
+  transition:background .15s ease, border-color .15s ease;
+}
+.quest input{position:absolute; opacity:0; width:1px; height:1px}
+.qbox{
+  flex:0 0 auto; width:31px; height:31px; border:3px solid var(--ink); border-radius:9px;
+  background:#fff; display:flex; align-items:center; justify-content:center;
+  font-family:var(--head); font-size:19px; color:#fff;
+}
+.quest input:checked ~ .qbox{background:var(--c)}
+.quest input:checked ~ .qbox::after{content:'✓'}
+.quest input:focus-visible ~ .qbox{outline:3px dashed var(--red); outline-offset:3px}
+.qtext{flex:1 1 auto; font-size:16px; font-weight:500; line-height:1.35}
+.quest input:checked ~ .qtext{color:var(--ink-soft); text-decoration:line-through; text-decoration-thickness:2px}
+.qmeta{flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:4px}
+.qtime{
+  font-size:13px; font-weight:600; color:var(--ink-soft);
+  border:2px solid var(--ink); border-radius:999px; padding:1px 9px; background:#fff;
+}
+.qxp{
+  font-family:var(--head); font-size:12.5px; background:var(--gold);
+  border:2px solid var(--ink); border-radius:999px; padding:0 8px;
+}
+.quest input:checked ~ .qmeta .qxp{opacity:.45}
+
+/* แบนเนอร์ครบวัน */
+.clear-banner{
+  display:flex; gap:14px; align-items:center; margin:14px 0 4px;
+  background:color-mix(in srgb, var(--game-red) 9%, #fffdf6);
+  border:3px dashed var(--game-red); border-radius:16px; padding:12px 14px;
+}
+.stampbox{
+  flex:0 0 auto; transform:rotate(-6deg); border:3px solid var(--game-red); border-radius:12px;
+  padding:6px 13px; text-align:center; color:var(--game-red);
+}
+.stampbox .cl{display:block; font-family:var(--head); font-size:22px; line-height:1}
+.stampbox .kana{display:block; font-family:var(--jp); font-size:11px; font-weight:700; letter-spacing:3px}
+.cb-text b{font-family:var(--head); font-size:17px; font-weight:400; display:block}
+.cb-text span{font-size:13.5px; color:var(--ink-soft)}
+
+/* ปุ่มเดินหน้า/ย้อน */
+.day-nav{display:flex; gap:9px; margin-top:16px}
+.chunk{
+  flex:1 1 auto; cursor:pointer; font-family:var(--head); font-size:16.5px;
+  background:var(--chip-bg); border:3px solid var(--ink); border-radius:13px;
+  box-shadow:3px 3px 0 rgba(43,43,51,.92); padding:12px 8px; min-height:52px;
+}
+.chunk:active{transform:translate(3px,3px); box-shadow:0 0 0 rgba(43,43,51,.92)}
+.chunk:disabled{opacity:.4; cursor:default; transform:none; box-shadow:3px 3px 0 rgba(43,43,51,.4)}
+.chunk.home{flex:0 0 104px}
+
+/* toast กลางจอ */
+#toast{
+  position:fixed; top:92px; left:50%; transform:translateX(-50%) translateY(-8px) scale(.95);
+  background:var(--ink); color:#fff; font-family:var(--head); font-size:17px;
+  border-radius:14px; padding:10px 18px; z-index:460; opacity:0; pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease; box-shadow:5px 5px 0 rgba(43,43,51,.35);
+  max-width:92vw; text-align:center;
+}
+#toast.show{opacity:1; transform:translateX(-50%) translateY(0) scale(1)}
+
+/* ป้ายช่วยเหลือแบบสแตติก (โชว์เฉพาะเมื่อ JS ไม่ทำงาน เช่น พรีวิวไฟล์ในแชท) */
+.ql-help{
+  margin:14px 0 0; padding:12px 14px; text-align:left;
+  background:color-mix(in srgb, var(--gold) 22%, #fffdf6);
+  border:3px dashed var(--ink); border-radius:14px;
+}
+.ql-help b{font-family:var(--head); font-size:17.5px; font-weight:400; display:block; margin-bottom:2px}
+.ql-help .sub{display:block; font-size:14.5px; color:var(--ink-soft); margin-bottom:8px}
+.ql-step{display:flex; gap:9px; align-items:center; font-size:16px; font-weight:600; margin-top:6px}
+.ql-step .n{
+  flex:0 0 auto; width:30px; height:30px; border-radius:999px; background:var(--gold);
+  border:2.5px solid var(--ink); display:flex; align-items:center; justify-content:center;
+  font-family:var(--head); font-size:15px;
+}
+
+/* ---------- หน้าปลดล็อกรหัสลับ ---------- */
+#unlock{position:fixed; inset:0; z-index:430; display:flex; align-items:center; justify-content:center; background:rgba(43,43,51,.82); padding:22px}
+.unlock-card{
+  width:min(430px,100%); background:var(--cover); border:3px solid var(--ink); border-radius:20px;
+  box-shadow:8px 8px 0 rgba(43,43,51,.9); padding:24px 20px 20px; text-align:center; transform:rotate(-.5deg);
+}
+.unlock-card.shake{animation:shake .32s ease}
+@keyframes shake{25%{transform:rotate(-.5deg) translateX(-8px)}50%{transform:rotate(-.5deg) translateX(7px)}75%{transform:rotate(-.5deg) translateX(-4px)}}
+.unlock-card h3{font-family:var(--head); font-size:23px; margin:0 0 4px}
+.unlock-card .sub{font-size:14.5px; color:var(--ink-soft); margin:0 0 12px}
+#pwInput{
+  width:100%; font:inherit; font-size:19px; letter-spacing:4px; text-align:center;
+  padding:12px 10px; border:3px solid var(--ink); border-radius:13px; background:#fff; margin:0 0 6px;
+}
+#pwShow{background:none; border:none; text-decoration:underline; cursor:pointer; color:var(--ink-soft); font-size:13px; padding:2px}
+#unlockErr{min-height:21px; font-size:13.5px; color:var(--game-red); font-weight:600; margin:2px 0 6px}
+#unlockBtn{
+  width:100%; cursor:pointer; font-family:var(--head); font-size:20px; color:#fff;
+  background:var(--game-red); border:3px solid var(--ink); border-radius:14px;
+  box-shadow:5px 5px 0 var(--ink); padding:14px 12px;
+}
+#unlockBtn:active{transform:translate(4px,4px); box-shadow:1px 1px 0 var(--ink)}
+#unlockBtn:disabled{opacity:.55}
+#skipUnlock{background:none; border:none; text-decoration:underline; cursor:pointer; color:var(--ink-soft); font-size:13px; margin-top:12px; padding:2px}
+
+/* โอเวอร์เลย์กระโดดเบราว์เซอร์ (เฉพาะกรณีเปิดจากลิงก์ในแอปแชท) */
+#bouncer{
+  position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center;
+  background:rgba(43,43,51,.82); padding:22px;
+}
+#bouncer[hidden]{display:none !important}
+.bouncer-card{
+  width:min(430px,100%); background:var(--cover); border:3px solid var(--ink); border-radius:20px;
+  box-shadow:8px 8px 0 rgba(43,43,51,.9); padding:22px 20px; text-align:center; transform:rotate(-.5deg);
+}
+.bouncer-card h3{font-family:var(--head); font-size:22px; margin:0 0 4px}
+.bouncer-card p{font-size:15px; color:var(--ink-soft); margin:0 0 14px}
+#jumpBtn{
+  width:100%; cursor:pointer; font-family:var(--head); font-size:20px; color:#fff;
+  background:var(--game-red); border:3px solid var(--ink); border-radius:15px;
+  box-shadow:5px 5px 0 var(--ink); padding:16px 12px;
+}
+#jumpBtn:active{transform:translate(4px,4px); box-shadow:1px 1px 0 var(--ink)}
+#stayBtn{
+  width:100%; margin-top:10px; cursor:pointer; font-family:var(--head); font-size:15px;
+  background:var(--chip-bg); color:var(--ink); border:2.5px solid var(--ink); border-radius:12px;
+  padding:11px 10px; min-height:48px;
+}
+
+/* ---------- เดสก์ท็อป ≥920px: แท็บขวาแบบสมุด ---------- */
+@media (max-width:919px){
+  #book{display:flex; flex-direction:column-reverse} /* มือถือ: แถบแท็บขึ้นบน ใต้ HUD */
+}
+@media (min-width:920px){
+  #book{display:grid; grid-template-columns:1fr 122px; align-items:start}
+  #tabs{
+    grid-column:2; grid-row:1; flex-direction:column; gap:10px; padding:14px 8px 14px 0;
+    overflow:visible; position:sticky; top:84px;
+  }
+  .tab{width:100%; min-width:0; height:64px; border-radius:14px 0 0 14px; flex-direction:row; gap:7px}
+  .tab .n{font-size:18px}
+  .tab[aria-current="true"]{transform:translateX(-10px); box-shadow:-4px 5px 0 rgba(43,43,51,.92)}
+  #page{grid-column:1; grid-row:1; padding:26px 24px 24px 52px}
+  .chips .chip.hotel{flex-basis:100%}
+  .day-nav{max-width:560px}
+}
+@media (max-width:479px){
+  .tab{min-width:74px; height:62px}
+  .stage-row h2{font-size:26px}
+  .qtext{font-size:15.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important; transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<button id="fontFab" aria-label="สลับขนาดตัวอักษร">A</button>
+
+<!-- ============ หน้าปก ============ -->
+<section id="cover">
+  <div class="cover-card">
+    <span class="kana-badge">スタート</span>
+    <h1 class="logo"><span class="r">JAPAN</span> <span class="k">TRIP</span> 2026</h1>
+    <p class="logo-sub">สมุดเกมเที่ยวญี่ปุ่นของครอบครัวเรา · ขบวนนำโดยน้องเฉาก๊วย 🐈‍⬛</p>
+
+    <svg class="cover-cat" viewBox="0 0 240 210" role="img" aria-label="น้องเฉาก๊วย แมวดำนำทาง">
+      <path class="tail" d="M178 168 C215 160 222 118 200 102" fill="none" stroke="#2b2b33" stroke-width="16" stroke-linecap="round"/>
+      <ellipse cx="118" cy="152" rx="66" ry="50" fill="#2b2b33"/>
+      <circle cx="96" cy="88" r="46" fill="#2b2b33"/>
+      <path d="M58 62 L64 18 L96 50 Z" fill="#2b2b33"/>
+      <path d="M118 46 L138 12 L148 58 Z" fill="#2b2b33"/>
+      <path d="M68 52 L71 30 L88 48 Z" fill="#e8a0a8" opacity=".85"/>
+      <path d="M124 42 L136 24 L139 50 Z" fill="#e8a0a8" opacity=".85"/>
+      <path d="M72 84 q8 -10 16 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M108 84 q8 -10 16 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="68" cy="101" rx="8" ry="5" fill="#e88490" opacity=".55"/>
+      <ellipse cx="124" cy="101" rx="8" ry="5" fill="#e88490" opacity=".55"/>
+      <path d="M89 101 q5 6 10 0 q5 6 10 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M40 86 h20 M42 98 l19 4 M134 90 h22 M135 100 l21 2" stroke="#fff" stroke-width="2.5" opacity=".8"/>
+      <rect x="64" y="121" width="66" height="12" rx="6" fill="#e8485f"/>
+      <circle cx="97" cy="141" r="8.5" fill="#f2c230" stroke="#2b2b33" stroke-width="3"/>
+      <ellipse cx="86" cy="196" rx="16" ry="9" fill="#2b2b33"/>
+      <ellipse cx="132" cy="196" rx="16" ry="9" fill="#2b2b33"/>
+      <path d="M80 192 v7 M92 192 v7 M126 192 v7 M138 192 v7" stroke="#4a4a55" stroke-width="2"/>
+    </svg>
+
+    <div class="stat-chips">
+      <span class="stat-chip">📅 26 ต.ค. – 4 พ.ย. 2026</span>
+      <span class="stat-chip">🛏 10 วัน 9 คืน</span>
+      <span class="stat-chip">👨‍👩‍👧‍👦 4 ท่าน · 2 ห้อง</span>
+      <span class="stat-chip">🔐 รหัสจองปลดล็อกด้วยรหัสลับครอบครัว</span>
+    </div>
+
+    <div class="route-dots" aria-label="เส้นทาง">
+      <span>โตเกียว</span><span class="rd" style="background:#e8485f"></span>
+      <span>คานาซาวา</span><span class="rd" style="background:#f0a12e"></span>
+      <span>ฟุกุอิ</span><span class="rd" style="background:#27a874"></span>
+      <span>โทยามะ</span><span class="rd" style="background:#3b8fd8"></span>
+      <span>คุซัทสึ</span><span class="rd" style="background:#8b6ad6"></span>
+      <span>นิกโกะ</span><span class="rd" style="background:#ef7b2f"></span>
+      <span>กลับบ้าน</span>
+    </div>
+
+    <div class="start-wrap">
+      <button id="startBtn" type="button" onclick="startGame()">▶ เริ่มเกมทริป<small>スタート</small></button>
+    </div>
+    <p class="cover-hint">ติ๊กภารกิจทีละข้อเก็บ XP — ยศจะเลื่อนจนถึง “ตำนานนักเที่ยวโอลิมปิก”</p>
+    <div id="qlHelp" class="ql-help">
+      <b>📢 กดปุ่มไม่ได้ใช่ไหม?</b>
+      <span class="sub">ตอนนี้ไฟล์อยู่ในโหมดพรีวิวของแชท — เกมต้องเปิดในเบราว์เซอร์เท่านั้น</span>
+      <span class="ql-step"><span class="n">1</span>กดค้างที่ไฟล์ในแชท แล้วเลือก “แชร์”</span>
+      <span class="ql-step"><span class="n">2</span>เลือกเปิดด้วย Safari หรือ Chrome — เกมจะขึ้นเองทันที</span>
+    </div>
+    <p class="cover-foot">เกม v0.3 · ข้อมูล Japan Trip Kit v4.1 · รหัสจองเข้ารหัสลับ AES 🔐 · <button id="resetB">รีเซ็ตความคืบหน้าเกม</button></p>
+  </div>
+</section>
+
+<!-- ============ จอเกม ============ -->
+<section id="game" hidden>
+  <header id="hud">
+    <svg class="hud-cat" viewBox="0 0 64 58" aria-hidden="true">
+      <path d="M12 28 L16 4 L32 20 Z" fill="#2b2b33"/>
+      <path d="M40 18 L52 2 L58 26 Z" fill="#2b2b33"/>
+      <circle cx="32" cy="36" r="22" fill="#2b2b33"/>
+      <path d="M22 34 q5 -7 10 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M34 34 q5 -7 10 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <rect x="18" y="47" width="28" height="6" rx="3" fill="#e8485f"/>
+      <title>น้องเฉาก๊วย ผู้นำทาง</title>
+    </svg>
+    <div class="rank-badge" id="lvBadge">Lv1</div>
+    <div class="rank-block">
+      <div class="rank-name" id="rankName">มือใหม่หัดเที่ยว</div>
+      <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+      <div class="xp-text" id="xpText">XP 0 / 100</div>
+    </div>
+    <div id="combo">คอมโบ ×2</div>
+  </header>
+
+  <div id="book">
+    <main id="page" aria-live="polite"><div class="page-inner" id="pageInner"></div></main>
+    <nav id="tabs" aria-label="เลือกวันทริป"></nav>
+  </div>
+</section>
+
+<!-- ============ หน้าปลดล็อกรหัสลับ ============ -->
+<div id="unlock" hidden>
+  <div class="unlock-card">
+    <h3>🔐 ปลดล็อกรหัสจอง</h3>
+    <p class="sub">ใส่รหัสลับประจำครอบครัว เพื่อดูเลขจองโรงแรม / เครื่องบิน / รถเช่า</p>
+    <input id="pwInput" type="password" inputmode="text" autocomplete="off" autocapitalize="off" placeholder="รหัสลับครอบครัว" aria-label="รหัสลับครอบครัว">
+    <button id="pwShow" type="button">👁 แสดงรหัส</button>
+    <div id="unlockErr" role="alert"></div>
+    <button id="unlockBtn" type="button">🔓 ปลดล็อก<small style="display:block; font-family:var(--jp); font-size:11px; letter-spacing:3px; opacity:.9; font-weight:700">かいじょ</small></button>
+    <button id="skipUnlock" type="button">เล่นก่อนโดยไม่ปลดล็อกก็ได้ — รหัสจองจะถูกซ่อน (กด 🔒 ทีหลังได้)</button>
+  </div>
+</div>
+
+<div id="bouncer" hidden>
+  <div class="bouncer-card">
+    <h3>🎮 เปิดเกมในเบราว์เซอร์จริง</h3>
+    <p id="jumpDesc">แอปแชทเล่นเกมได้ไม่เต็มรูปแบบ — กดปุ่มใหญ่เพื่อส่งต่อ Chrome อัตโนมัติ</p>
+    <button id="jumpBtn" type="button">▶ เปิดใน Chrome เลย</button>
+    <button id="stayBtn" type="button">เล่นในแอปนี้ต่อ (อาจมีข้อจำกัด)</button>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* ===== ข้อมูลทริปจริง 10 วัน (จาก japan-trip-kit v4.1 — เวลายึดใบจองจริง ระยะเดินทางจากแผนต้นฉบับ) ===== */
+const CITIES = {
+  tokyo:   {c:'#e8485f', on:'#fff', tint:'rgba(232,72,95,.10)'},
+  kanazawa:{c:'#f0a12e', on:'#2b2b33', tint:'rgba(240,161,46,.13)'},
+  fukui:   {c:'#27a874', on:'#fff', tint:'rgba(39,168,116,.10)'},
+  toyama:  {c:'#3b8fd8', on:'#fff', tint:'rgba(59,143,216,.10)'},
+  kusatsu: {c:'#8b6ad6', on:'#fff', tint:'rgba(139,106,214,.11)'},
+  nikko:   {c:'#ef7b2f', on:'#2b2b33', tint:'rgba(239,123,47,.13)'}
+};
+const DAYS = [
+  {n:1, tab:'โตเกียว', city:'โตเกียว', col:'tokyo',
+   sub:'จ. 26 ต.ค. · กรุงเทพฯ ➔ อูเอโนะ (บิน NH806 + รถตู้รับส่วนตัว)',
+   trans:'✈️ ANA NH806 สุวรรณภูมิ 07:10 → นาริตะ 15:05',
+   hotel:'🏨 Mitsui Garden Hotel Ueno · 26–27 ต.ค. (1 คืน) · 2 ห้อง',
+   bks:['d1hotel'],
+   w:'🌦 โตเกียว 21°/17°',
+   quests:[
+     {t:'บิน ANA NH806 จากสุวรรณภูมิ ➔ นาริตะ (~5 ชม. 55 นาที)', time:'07:10-15:05'},
+     {t:'ถึงนาริตะ ผ่านตรวจคนเข้าเมือง + รับกระเป๋า', time:'15:05-15:45'},
+     {t:'ขึ้นรถตู้รับส่วนตัวที่จองไว้ ➔ โรงแรมอูเอโนะ (~1 ชม.)', time:'15:45-16:45'},
+     {t:'เช็กอิน Mitsui Garden Hotel Ueno', time:'16:45'},
+     {t:'ค่ำ: ปิ้งย่างแถวอูเอโนะ + ช้อปปิ้ง', time:'18:00-20:00'}
+   ]},
+  {n:2, tab:'คานาซาวา', city:'คานาซาวา', col:'kanazawa',
+   sub:'อ. 27 ต.ค. · ชินคันเซ็น Kagayaki 507 จากอูเอโนะ',
+   trans:'🚄 Kagayaki No.507 อูเอโนะ 09:26 → คานาซาวา 11:52 (โบกี้ 7 · 7D/7E/8D/8E)',
+   hotel:'🏨 Hotel Forza Kanazawa · 27–29 ต.ค. (2 คืน) · 2 ห้อง',
+   bks:['d2hotel'],
+   w:'🌦 คานาซาวา 20°/13°',
+   quests:[
+     {t:'ขึ้น Kagayaki 507 · รับตั๋วกระดาษที่ Eki-net ด้วย QR (2 ชม. 26 นาที)', time:'09:26-11:52'},
+     {t:'ถึงคานาซาวา เดิน ~10 นาที · ฝากกระเป๋า Hotel Forza', time:'11:52-12:15'},
+     {t:'เที่ยง: ตลาดปลาโอมิโจะ (1 ชม. 30 นาที)', time:'12:15-13:45'},
+     {t:'สวนเค็นโรคุเอ็น — สวน 1 ใน 3 ของญี่ปุ่น (Loop Bus)', time:'14:00-16:00'},
+     {t:'ย่านฮิงาชิจายะ + ซอฟต์ครีมทองคำ', time:'16:00-18:00'}
+   ]},
+  {n:3, tab:'ฟุกุอิ', city:'ฟุกุอิ', col:'fukui',
+   sub:'พ. 28 ต.ค. · Road Trip ฟุกุอิ (รถเช่าไป–กลับ)',
+   trans:'🚗 รับรถ TOYOTA 09:30 สาขา Kanazawa Sta. West',
+   hotel:'🏨 Hotel Forza Kanazawa (คืนที่ 2) · 🚗 รถเช่า',
+   bks:['d3car'],
+   w:'🌦 คานาซาวา 18°/9°',
+   quests:[
+     {t:'เดินไป TOYOTA Rent a Car สาขา Kanazawa Sta. West', time:'09:00-09:30'},
+     {t:'รับรถเช่า TOYOTA Corolla Touring Hybrid', time:'09:30'},
+     {t:'ขับลงใต้สู่ผาโทจินโบ (1 ชม. 15 นาที)', time:'09:45-11:00'},
+     {t:'วิวผาริมทะเล + เที่ยงปูเอจิเซ็น (ยังไม่ได้จองร้าน)', time:'11:00-12:30'},
+     {t:'ขับสู่วัดเซนเอเฮจิ (1 ชม.)', time:'12:30-13:30'},
+     {t:'วัดเซนใหญ่ ท่ามกลางป่าสน', time:'13:30-15:30'},
+     {t:'ขับกลับคานาซาวา (1 ชม. 15 นาที)', time:'15:30-16:45'},
+     {t:'ค่ำ: !! ยังไม่มีแผน — ช้อปปิ้งรอบสถานีแล้วค่อยเลือกร้าน', time:'ค่ำ'}
+   ]},
+  {n:4, tab:'โทยามะ', city:'โทยามะ', col:'toyama',
+   sub:'พฤ. 29 ต.ค. · โกคายามะ ➔ โทยามะ (รถเช่า)',
+   trans:'🚗 รถเช่ามุ่งหมู่บ้านมรดกโลกโกคายามะ',
+   hotel:'🏨 Hotel Enoe Toyama · 29–31 ต.ค. (2 คืน) · 2 ห้อง',
+   bks:['d4hotel'],
+   w:'⛅ โทยามะ 16°/8°',
+   quests:[
+     {t:'ขนกระเป๋า มุ่งหมู่บ้านโกคายามะ (Ainokura) (1 ชม.)', time:'08:30-09:30'},
+     {t:'บ้านหลังคาชันทรงกัสโช (1 ชม. 30 นาที)', time:'09:30-11:00'},
+     {t:'ขับไปท่าเรือ Shogawa', time:'11:00-11:30'},
+     {t:'ล่องเรือ Shogawa Gorge รอบ 12:00 · เที่ยงกินรีบที่ท่าเรือ (ยังไม่ได้จอง)', time:'12:00-12:45'},
+     {t:'ขับสู่น้ำตกโชเมียว (1 ชม. 15 นาที)', time:'12:45-14:00'},
+     {t:'น้ำตกโชเมียว — สูงสุดในญี่ปุ่น', time:'14:00-16:00'},
+     {t:'ขับเข้าตัวเมืองโทยามะ · เช็กอิน Hotel Enoe', time:'16:00-17:00'},
+     {t:'ค่ำ: กุ้งขาวชิโรเอบิ (ยังไม่ได้จองร้าน)', time:'18:00-20:00'}
+   ]},
+  {n:5, tab:'คุโรเบะ', city:'หุบเขาคุโรเบะ', col:'toyama',
+   sub:'ศ. 30 ต.ค. · รถไฟหุบเขาคุโรเบะ ➔ ชิลโทยามะ',
+   trans:'🚂 Kurobe Gorge Railway เปิดประทุน (ขับไปสถานีอูนาซูกิ)',
+   hotel:'🏨 Hotel Enoe Toyama (คืนที่ 2)',
+   bks:['d4hotel'],
+   w:'🌦 โทยามะ 23°/9°',
+   quests:[
+     {t:'ขับไปสถานีอูนาซูกิ (1 ชม.)', time:'08:30-09:30'},
+     {t:'คอขบวนที่ Unazuki — ซื้อตั๋วรอบเช้าคนน้อย', time:'09:30-10:00'},
+     {t:'รถไฟหุบเขาคุโรเบะ ➔ เคยากิไดระ (1 ชม. 20 นาที)', time:'10:00-11:20'},
+     {t:'สะพานแดงโอกุคาเนะ + แช่เท้าออนเซ็น', time:'11:20-13:30'},
+     {t:'รถไฟกลับ Unazuki (1 ชม. 20 นาที)', time:'13:30-14:50'},
+     {t:'ขับกลับเข้าเมืองโทยามะ (1 ชม.)', time:'15:00-16:00'},
+     {t:'Kansui Park — กาแฟริมน้ำตอนเย็น', time:'16:00-18:00'},
+     {t:'ค่ำ: ราเม็งร้อน ๆ เคยากิไดระ (ยังไม่ได้จองร้าน)', time:'ค่ำ'}
+   ]},
+  {n:6, tab:'คุซัทสึ', city:'คุซัทสึ', col:'kusatsu',
+   sub:'ส. 31 ต.ค. · รถเช่าข้ามเจแปนแอลป์ ➔ คุซัทสึ',
+   trans:'🚗 ขับไกล 3.5–4 ชม. (แวะพัก 1–2 จุด)',
+   hotel:'🏨 Kusatsu Hotel 1913 · 1 คืน · ค่ำ+เช้า',
+   bks:['d6hotel'],
+   w:'🌦 คุซัทสึ 13°/6°',
+   quests:[
+     {t:'ขับข้ามแอลป์สู่คุซัทสึ (รวมแวะพัก 1–2 จุด)', time:'08:30-12:30'},
+     {t:'เที่ยง: คาวาอุด้ง (Okitaya) กินสายหน่อย', time:'12:30-14:00'},
+     {t:'เช็กอิน Kusatsu Hotel 1913 (เช็กอินได้ 14:00–18:00)', time:'14:00-15:00'},
+     {t:'ทุ่งน้ำแร่ยูบาตาเกะ + มันจูนึ่งร้อน', time:'15:00-18:00'},
+     {t:'ค่ำเรียวกัง + ออนเซ็นอันดับ 1 ของญี่ปุ่น', time:'18:00 เป็นต้นไป'}
+   ]},
+  {n:7, tab:'คินุกาวะ', city:'คินุกาวะ', col:'nikko',
+   sub:'อา. 1 พ.ย. · นิกโกะประตูหลัง ➔ คินุกาวะออนเซ็น',
+   trans:'🚗 Romantic Road (Route 120) ตัดเขาสู่นิกโกะ',
+   hotel:'🏨 Kinugawa Onsen Hotel · 1 คืน · บุฟเฟ่ต์เตาหิน',
+   bks:['d7hotel'],
+   w:'☁️ คินุกาวะ 14°/6°',
+   quests:[
+     {t:'เช็กเอาท์ (โรงแรมให้ออก ~10:00)', time:'10:00-10:15'},
+     {t:'ขับ Romantic Road ตัดเขาสู่นิกโกะ (รวมแวะพัก)', time:'10:15-13:30'},
+     {t:'ทะเลสาบชูเซนจิ + เที่ยงริมทะเลสาบ (ยังไม่ได้จอง)', time:'13:30-14:30'},
+     {t:'น้ำตกเคกอน (ลิฟต์ลงชม) + วิวใบไม้เปลี่ยนสี', time:'14:30-16:00'},
+     {t:'โค้งอิโรฮาซากะขาลง ➔ คินุกาวะออนเซ็น', time:'16:00-17:00'},
+     {t:'เช็กอิน Kinugawa Onsen Hotel (รับถึง 15:00–18:00)', time:'17:00'}
+   ]},
+  {n:8, tab:'นิกโกะ', city:'นิกโกะ–ยูนิชิกาวะ', col:'nikko',
+   sub:'จ. 2 พ.ย. · มรดกโลกนิกโกะ ➔ หุบเขายูนิชิกาวะ',
+   trans:'🚗 รถเช่า (ขับขึ้นเหนือหลังเที่ยง)',
+   hotel:'🏨 Yukemurinosato Kashiwaya · 1 คืน',
+   bks:['d8hotel'],
+   w:'☁️ ยูนิชิกาวะ 9°/1°',
+   quests:[
+     {t:'เช็กเอาท์ · ขับกลับโซนนิกโกะชั้นล่าง (25 นาที)', time:'10:00-10:25'},
+     {t:'สะพานแดงชินเกียว + ศาลเจ้าโทโชกุ', time:'10:25-12:30'},
+     {t:'เที่ยงยังไม่ได้จอง — แนะนำเมนูยูบะ (ฟองเต้าหู้)', time:'12:30-13:45'},
+     {t:'ขับขึ้นเหนือสู่ยูนิชิกาวะออนเซ็น (1 ชม. 15 นาที)', time:'13:45-15:00'},
+     {t:'เช็กอินเรียวกัง Kashiwaya · ยูคาตะ', time:'15:00'},
+     {t:'ค่ำ: คายเซกิ + ออนเซ็นริมลำธาร', time:'ค่ำ'}
+   ]},
+  {n:9, tab:'โตเกียว', city:'โตเกียว', col:'tokyo',
+   sub:'อ. 3 พ.ย. · ขับกลับโตเกียว (คืนรถช้าสุด 19:00)',
+   trans:'🚗 ทางด่วนกลับโตเกียว · คืนรถ Toyota Nihonbashi',
+   hotel:'🏨 remm Tokyo Kyobashi · 1 คืน · Double + Economy Twin',
+   bks:['d9hotel'],
+   w:'🌦 โตเกียว 14°/11°',
+   quests:[
+     {t:'เช็กเอาท์ Kashiwaya · ขับทางด่วนยิงยาวกลับโตเกียว (รวมแวะพัก 1 จุด)', time:'10:30-13:30'},
+     {t:'ขับเข้าเมืองโตเกียว (ออกด่วนหน้าสถานีเกียวบาชิ)', time:'13:30-14:00'},
+     {t:'ถึง remm Kyobashi · ฝากกระเป๋า + วางรถในลานจอด', time:'14:00'},
+     {t:'เที่ยงย่านเกียวบาชิ/นิโฮมบาชิ (ยังไม่ได้จอง)', time:'14:30-15:30'},
+     {t:'ช้อปปิ้งย่านกินซา–นิโฮมบาชิ (เดินถึงกัน)', time:'15:30-18:30'},
+     {t:'คืนรถ Toyota สาขา Tokyo Sta. Nihonbashi (ช้าสุด 19:00)', time:'19:00'},
+     {t:'ค่ำ: ปิ้งย่าง/ราเม็ง (ยังไม่ได้จอง — เลือกตอนนั้น)', time:'19:30 เป็นต้นไป'}
+   ]},
+  {n:10, tab:'บินกลับ', city:'กลับบ้าน', col:'tokyo',
+   sub:'พ. 4 พ.ย. · โตเกียว ➔ กรุงเทพฯ (บิน 18:55)',
+   trans:'🚌 Airport Bus TYO-NRT จากป้าย Noriba หน้าสถานีโตเกียว → นาริตะ T1',
+   hotel:'✈️ ANA NH805 นาริตะ 18:55 → สุวรรณภูมิ 00:20',
+   bks:['d10flight'],
+   w:'☁️ โตเกียว 18°/11°',
+   quests:[
+     {t:'เช็กเอาท์ remm · ฝากกระเป๋าไว้ที่โรงแรม', time:'09:00-10:00'},
+     {t:'เช่าชุดกิโมโน เดินเล่นถ่ายรูปย่านกินซา', time:'10:00-12:00'},
+     {t:'คืนชุด + เที่ยงสบาย ๆ แถวสถานี (ยังไม่ได้จอง)', time:'12:00-13:00'},
+     {t:'ซื้อของฝาก Tokyo Station / Daimaru / กินซา', time:'13:00-14:30'},
+     {t:'รับกระเป๋า + ขึ้น Airport Bus TYO-NRT ➔ นาริตะ T1', time:'14:30-16:05'},
+     {t:'เช็กอิน ANA · ฝากกระเป๋าใหญ่', time:'16:05'},
+     {t:'บิน ANA NH805 กลับบ้าน 🇯🇵❤️', time:'18:55'}
+   ]}
+];
+
+/* ===== ห้องนิรภัยรหัสจอง — AES-GCM + PBKDF2 (รหัสจองไม่อยู่ในไฟล์แบบข้อความล้วน) ===== */
+const VAULT = {"v":1,"iters":400000,"salt":"MyTSZ5I3ntOTI9D7Vc8CwA==","iv":"Pn092HgsGq3voOHv","ct":"KrsZQVmI2NXHiRDUQBlPkoMfTSNjFXOoCqaQppcQHokIZOP9dGJPbgRzxluNcFmMBjqiNeLI/sprn0w451kARso1ubyxDT3CgiseyIedMSJ0NUWeBT/Yhrnj10o/++4ou3IA85AEdNMB/3LW06sR0c2VbIkv3UIup1IzxV3nnzQGNXffOwqd/YGTnRCdFfCkLH2hCoJsNtBxZnbjGpsd4IbvJeY30Ch82yDJOwPyHE5mR/xqsfuS38UceWRu4LvzwfJx1v2GBuQ0I6l4MAFyqk0OmzvOEkBT3zoSWi7tA951W50UmgYigMwZ7as3lUnTdWgxNiA/IFvPrDC5iwO4vnNpgGFDq/tfwzP2NlR6pTBQxjHxf33fzR1LWu8MirJBbk9V14aau6zGrnNC"};
+const UNLOCK_KEY = 'chaokuay-unlock-v03';
+let BK = null;   /* แผนที่รหัสจองหลังถอดรหัสสำเร็จ */
+let unlockFails = 0;
+
+function b64ToBuf(b){
+  const s = atob(b), u = new Uint8Array(s.length);
+  for(let i=0;i<s.length;i++) u[i] = s.charCodeAt(i);
+  return u;
+}
+async function tryUnlock(pw){
+  if(!crypto || !crypto.subtle) throw new Error('NO_SUBTLE');
+  const mat = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt:b64ToBuf(VAULT.salt), iterations:VAULT.iters, hash:'SHA-256'},
+    mat, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64ToBuf(VAULT.iv)}, key, b64ToBuf(VAULT.ct));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function bkHTML(key){
+  if(BK && BK[key]){
+    const codes = String(BK[key]).split(' + ').map(c=>'<code>'+esc(c)+'</code>').join(' + ');
+    return '<span class="bk ok">จอง '+codes+'</span>';
+  }
+  return '<button class="bk locked" type="button" data-bk="'+esc(key)+'" aria-label="ปลดล็อกรหัสจอง">จอง 🔒🔒🔒🔒</button>';
+}
+
+/* ===== ระบบยศ ===== */
+const RANKS = [
+  {xp:0,   name:'มือใหม่หัดเที่ยว'},
+  {xp:100, name:'นักเดินทางฝึกหัด'},
+  {xp:250, name:'สายเที่ยวตัวจริง'},
+  {xp:450, name:'ไกด์ประจำครอบครัว'},
+  {xp:650, name:'ตำนานนักเที่ยวโอลิมปิก'}
+];
+const XP_ITEM = 10, XP_DAY = 50;
+const FS = [18, 20, 22];
+
+/* ===== สถานะ ===== */
+const KEY = 'chaokuay-game-v03';
+let S = {day:1, fs:0, checks:{}};
+try{
+  const raw = localStorage.getItem(KEY);
+  if(raw){ const p = JSON.parse(raw); if(p && p.checks) S = p; }
+}catch(e){}
+DAYS.forEach(d=>{
+  if(!Array.isArray(S.checks[d.n]) || S.checks[d.n].length !== d.quests.length){
+    const old = Array.isArray(S.checks[d.n]) ? S.checks[d.n] : [];
+    S.checks[d.n] = d.quests.map((_,i)=> old[i] === true);
+  }
+});
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+
+/* ===== คำนวณ ===== */
+function dayFull(d){ const c = S.checks[d.n]; return c.length > 0 && c.every(Boolean); }
+function totalXP(){
+  return DAYS.reduce((s,d)=>{
+    const done = S.checks[d.n].filter(Boolean).length;
+    return s + done*XP_ITEM + (dayFull(d) ? XP_DAY : 0);
+  }, 0);
+}
+function rankIdx(x){ let i = 0; RANKS.forEach((r,j)=>{ if(x >= r.xp) i = j; }); return i; }
+
+/* ===== อ้างอิง DOM ===== */
+const $ = id => document.getElementById(id);
+const cover = $('cover'), game = $('game'), pageInner = $('pageInner'), tabsEl = $('tabs');
+const lvBadge = $('lvBadge'), rankName = $('rankName'), xpFill = $('xpFill'), xpText = $('xpText');
+const combo = $('combo'), toast = $('toast'), fontFab = $('fontFab');
+const unlockEl = $('unlock'), pwInput = $('pwInput');
+
+/* ===== HUD ===== */
+function renderHUD(){
+  const xp = totalXP(), i = rankIdx(xp), r = RANKS[i], next = RANKS[i+1];
+  lvBadge.textContent = 'Lv' + (i+1);
+  rankName.textContent = r.name;
+  let pct, txt;
+  if(next){
+    pct = Math.min(100, Math.round((xp - r.xp) / (next.xp - r.xp) * 100));
+    txt = 'XP ' + xp + ' / ' + next.xp;
+  }else{
+    pct = 100; txt = 'XP ' + xp + ' · ยศสูงสุดแล้ว! 🏆';
+  }
+  xpFill.style.width = pct + '%';
+  xpText.textContent = txt;
+}
+
+/* ===== แท็บวัน ===== */
+function buildTabs(){
+  tabsEl.innerHTML = '';
+  DAYS.forEach(d=>{
+    const col = CITIES[d.col];
+    const b = document.createElement('button');
+    b.className = 'tab'; b.dataset.n = d.n;
+    b.style.setProperty('--c', col.c); b.style.setProperty('--on', col.on);
+    b.innerHTML = '<span class="n">' + d.n + '</span><span class="city">' + d.tab + '</span>';
+    b.setAttribute('role','tab');
+    b.addEventListener('click', ()=> setDay(d.n));
+    tabsEl.appendChild(b);
+  });
+  markTabs();
+}
+function markTabs(){
+  [...tabsEl.children].forEach(b=>{
+    const n = +b.dataset.n;
+    if(n === S.day) b.setAttribute('aria-current','true'); else b.removeAttribute('aria-current');
+    b.classList.toggle('done', dayFull(DAYS[n-1]));
+  });
+}
+
+/* ===== หน้าวัน ===== */
+function renderDay(){
+  const d = DAYS[S.day-1], col = CITIES[d.col], c = S.checks[d.n];
+  const done = c.filter(Boolean).length, full = dayFull(d);
+  pageInner.innerHTML =
+    '<div class="stage-head" style="--c:'+col.c+';--on:'+col.on+'">' +
+      '<span class="kana-tag">ステージ</span>' +
+      '<div class="stage-row"><span class="stage-no">STAGE ' + d.n + '</span><h2>' + d.city + '</h2></div>' +
+      '<p class="stage-sub">' + d.sub + '</p>' +
+    '</div>' +
+    '<div class="chips">' +
+      '<div class="chip"><b>' + d.trans + '</b></div>' +
+      '<div class="chip hotel">' + d.hotel +
+        (d.bks && d.bks.length ? ' ' + d.bks.map(bkHTML).join(' ') : '') + '</div>' +
+      '<div class="chip">' + d.w + '</div>' +
+    '</div>' +
+    '<div class="prog-row"><span id="dayProg"></span><span class="bonus-hint">เช็คครบวันรับโบนัส +50 XP</span></div>' +
+    '<div class="quests">' +
+      d.quests.map((q,i)=>
+        '<label class="quest" style="--c:'+col.c+'">' +
+          '<input type="checkbox" data-d="'+d.n+'" data-q="'+i+'"'+(c[i]?' checked':'')+'>' +
+          '<span class="qbox" aria-hidden="true"></span>' +
+          '<span class="qtext">'+q.t+'</span>' +
+          '<span class="qmeta"><span class="qtime">'+q.time+'</span><span class="qxp">+10</span></span>' +
+        '</label>'
+      ).join('') +
+    '</div>' +
+    '<div class="clear-banner" id="clearB"'+(full?'':' hidden')+'>' +
+      '<div class="stampbox"><span class="cl">CLEAR!</span><span class="kana">クリア</span></div>' +
+      '<div class="cb-text"><b>เก็บภารกิจครบวันนี้!</b><span>โบนัส +50 XP เข้ายศแล้ว</span></div>' +
+    '</div>' +
+    '<div class="day-nav">' +
+      '<button class="chunk" id="prevB"'+(d.n===1?' disabled':'')+'>◀ วันก่อนหน้า</button>' +
+      '<button class="chunk home" id="homeB">🏠 หน้าปก</button>' +
+      '<button class="chunk" id="nextB"'+(d.n===10?' disabled':'')+'>วันถัดไป ▶</button>' +
+    '</div>';
+  updateDayStatus();
+  $('prevB').addEventListener('click', ()=> setDay(S.day-1));
+  $('nextB').addEventListener('click', ()=> setDay(S.day+1));
+  $('homeB').addEventListener('click', showCover);
+  if(!pageInner.classList.contains('flip')){
+    pageInner.classList.add('flip');
+    setTimeout(()=> pageInner.classList.remove('flip'), 300);
+  }
+}
+function updateDayStatus(){
+  const d = DAYS[S.day-1], c = S.checks[d.n];
+  const done = c.filter(Boolean).length, full = dayFull(d);
+  const el = $('dayProg'); if(el) el.textContent = 'วันนี้เช็คแล้ว ' + done + '/' + c.length;
+  const cb = $('clearB'); if(cb) cb.hidden = !full;
+}
+function setDay(n){
+  S.day = Math.min(10, Math.max(1, n)); save();
+  renderDay(); markTabs();
+}
+
+/* ===== เช็คภารกิจ + คอมโบ + เลื่อนยศ ===== */
+let comboN = 0, lastT = 0, comboTimer = null, toastTimer = null;
+function onCheck(d, q, val){
+  const prevXP = totalXP(), prevRank = rankIdx(prevXP);
+  S.checks[d][q] = val; save();
+  if(val){
+    const now = Date.now();
+    comboN = (now - lastT < 6000) ? comboN + 1 : 1;
+    lastT = now;
+    if(comboN >= 2){
+      combo.textContent = 'คอมโบ ×' + comboN;
+      combo.classList.add('show');
+      clearTimeout(comboTimer);
+      comboTimer = setTimeout(()=> combo.classList.remove('show'), 2800);
+    }
+  }
+  renderHUD(); updateDayStatus(); markTabs();
+  const full = dayFull(DAYS[d-1]);
+  if(full && !DAYS[d-1]._cheered){ DAYS[d-1]._cheered = true; showToast('✨ ครบวันนี้แล้ว! โบนัส +50 XP'); }
+  if(!full) DAYS[d-1]._cheered = false;
+  const nowRank = rankIdx(totalXP());
+  if(nowRank > prevRank) showToast('🎉 ยศเลื่อน! ' + RANKS[nowRank].name);
+}
+
+/* ===== toast ===== */
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> toast.classList.remove('show'), 2600);
+}
+
+/* ===== ปลดล็อก / ปิดหน้ารหัสลับ ===== */
+function openUnlock(){
+  unlockEl.hidden = false;
+  $('unlockErr').textContent = '';
+  setTimeout(()=> pwInput.focus(), 60);
+}
+function closeUnlock(){ unlockEl.hidden = true; }
+async function doUnlock(){
+  const pw = pwInput.value;
+  if(!pw){ $('unlockErr').textContent = 'พิมพ์รหัสลับก่อนนะ'; return; }
+  $('unlockBtn').disabled = true;
+  $('unlockErr').textContent = 'กำลังตรวจรหัส…';
+  try{
+    BK = await tryUnlock(pw);
+    try{ localStorage.setItem(UNLOCK_KEY, JSON.stringify(BK)); }catch(e){}
+    closeUnlock();
+    if(game.hidden) enterGame(); else setDay(S.day);
+    showToast('🔓 ปลดล็อกรหัสจองสำเร็จ!');
+  }catch(err){
+    unlockFails++;
+    if(err && err.message === 'NO_SUBTLE'){
+      $('unlockErr').textContent = 'เบราว์เซอร์นี้ปลดล็อกไม่ได้ — เปิดผ่านลิงก์ https หรือ Chrome/Safari';
+    }else{
+      $('unlockErr').textContent = 'รหัสไม่ถูก — ลองใหม่อีกครั้ง' + (unlockFails >= 3 ? ' (รหัสลับอยู่ในกลุ่มไลน์ครอบครัว)' : '');
+      const card = document.querySelector('.unlock-card');
+      card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+      pwInput.select();
+    }
+  }
+  $('unlockBtn').disabled = false;
+}
+$('unlockBtn').addEventListener('click', doUnlock);
+pwInput.addEventListener('keydown', e=>{ if(e.key === 'Enter') doUnlock(); });
+$('pwShow').addEventListener('click', ()=>{
+  pwInput.type = pwInput.type === 'password' ? 'text' : 'password';
+  $('pwShow').textContent = pwInput.type === 'password' ? '👁 แสดงรหัส' : '🙈 ซ่อนรหัส';
+});
+$('skipUnlock').addEventListener('click', ()=>{
+  closeUnlock(); enterGame();
+  showToast('รหัสจองยังถูกซ่อน — กดปุ่ม 🔒 ในหน้าวันเพื่อปลดล็อกได้ทุกเมื่อ');
+});
+
+/* ===== ปก / เริ่มเกม ===== */
+function showCover(){ game.hidden = true; cover.hidden = false; }
+function enterGame(){
+  cover.hidden = true; game.hidden = false;
+  setDay(S.day);
+  window.scrollTo(0,0);
+}
+function startGame(){
+  if(unlockEl.hidden === false) return;   /* กันสอง event ซ้อน */
+  if(BK) enterGame(); else openUnlock();
+}
+$('startBtn').addEventListener('click', startGame);
+
+/* ===== เช็คบ็อกซ์ + ปุ่ม 🔒 (event delegation) ===== */
+pageInner.addEventListener('change', e=>{
+  if(e.target && e.target.matches('input[type="checkbox"]')){
+    onCheck(+e.target.dataset.d, +e.target.dataset.q, e.target.checked);
+  }
+});
+pageInner.addEventListener('click', e=>{
+  const b = e.target.closest('.bk.locked');
+  if(b) openUnlock();
+});
+
+/* ===== A สลับขนาดตัวอักษร ===== */
+function applyFS(){
+  document.documentElement.style.fontSize = FS[S.fs] + 'px';
+  fontFab.style.fontSize = (19 + S.fs*5) + 'px';
+  fontFab.setAttribute('aria-label', 'สลับขนาดตัวอักษร (ปัจจุบัน ' + FS[S.fs] + 'px)');
+}
+fontFab.addEventListener('click', ()=>{
+  S.fs = (S.fs + 1) % FS.length; save(); applyFS();
+});
+
+/* ===== คีย์บอร์ด ← → เลื่อนวัน ===== */
+document.addEventListener('keydown', e=>{
+  if(game.hidden) return;
+  if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  if(e.key === 'ArrowRight') setDay(S.day + 1);
+  if(e.key === 'ArrowLeft') setDay(S.day - 1);
+});
+
+/* ===== รีเซ็ต ===== */
+$('resetB').addEventListener('click', ()=>{
+  if(confirm('ล้างการเช็คทั้งหมด เริ่มเกมใหม่จริงไหม?')){
+    S = {day:1, fs:S.fs, checks:{}};
+    DAYS.forEach(d=>{ S.checks[d.n] = d.quests.map(()=>false); d._cheered = false; });
+    save(); renderHUD(); if(!game.hidden) setDay(1);
+    showToast('เริ่มเกมใหม่แล้ว');
+  }
+});
+
+/* ===== เริ่มต้น ===== */
+try{
+  const cached = localStorage.getItem(UNLOCK_KEY);
+  if(cached){ BK = JSON.parse(cached); }
+}catch(e){}
+DAYS.forEach(d=>{ if(dayFull(d)) d._cheered = true; });
+applyFS(); buildTabs(); renderHUD();
+(function(){
+  const done = DAYS.reduce((s,d)=> s + S.checks[d.n].filter(Boolean).length, 0);
+  if(done > 0){
+    $('startBtn').firstChild.textContent = '▶ เล่นต่อทริป (เช็คไปแล้ว ' + done + ' รายการ)';
+  }
+})();
+
+/* ===== ช่วยเหลือตอนเปิดจากแอปแชท ===== */
+/* JS รันได้ถึงบรรทัดนี้ = ไม่ใช่พรีวิวไร้ JS → ซ่อนคำแนะนำสแตติก */
+$('qlHelp').hidden = true;
+(function(){
+  const ua = navigator.userAgent || '';
+  const inApp = /Line|Telegram|FBAN|FBAV|Instagram|FB_IAB|Twitter|Snapchat/i.test(ua);
+  const isHttp = /^https?:$/.test(location.protocol);
+  if(!(inApp && isHttp)) return;         /* ไฟล์ local: แอนดรอยด์เล่นในแอปได้อยู่แล้ว / iPhone ใช้ป้ายสแตติก */
+  const and = /Android/i.test(ua);
+  $('jumpDesc').textContent = and
+    ? 'แอปแชทเล่นเกมได้ไม่เต็มรูปแบบ — กดปุ่มใหญ่เพื่อส่งต่อ Chrome อัตโนมัติ'
+    : 'แอปแชทเล่นเกมได้ไม่เต็มรูปแบบ — กดปุ่มใหญ่เพื่อเปิดใน Chrome (ถ้ามีติดตั้ง)';
+  $('jumpBtn').addEventListener('click', function(){
+    const here = location.host + location.pathname + location.search;
+    const enc = encodeURIComponent(location.href);
+    location.href = and
+      ? 'intent://' + here + '#Intent;scheme=http;package=com.android.chrome;S.browser_fallback_url=' + enc + ';end'
+      : 'googlechrome://' + here;
+    setTimeout(function(){ $('bouncer').hidden = true; }, 1500);
+  });
+  $('stayBtn').addEventListener('click', function(){ $('bouncer').hidden = true; });
+  $('bouncer').hidden = false;           /* กดยักษ์ปุ่มเดียว จบ — ไม่ต้องเลือกเอง */
+})();
+</script>
+</body>
+</html>
