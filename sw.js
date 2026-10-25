@@ -1,7 +1,7 @@
 /* Service Worker — เกมสมุดแท็บทริปญี่ปุ่น
    เก็บทุกอย่างลง cache ตั้งแต่ครั้งแรกที่เปิดแบบมีเน็ต → เปิดซ้ำแบบออฟไลน์ได้
    (หน้าแผน 10 วันข้อมูลฝังในไฟล์อยู่แล้ว + ฟอนต์จาก Google CDN เก็บซ้ำพอเจอครั้งแรก) */
-const CACHE = 'chaokuay-offline-v063';
+const CACHE = 'chaokuay-offline-v064';
 const PRECACHE = [
   './',
   './index.html',

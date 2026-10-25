@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.6.3)</title>
+<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.6.4)</title>
 <!-- 004-arcade-stage · v0.5 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
      โครงมาจาก mockup 002 (สมุดแท็บรายวัน) + ชุดเกม: HUD ยศ/XP · ปุ่มอาร์เคดขอบหนา · แมวนำทาง "น้องเฉาก๊วย"
      v0.3: ข้อมูล sync v4.1 + รหัสจองเข้ารหัสลับ AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
@@ -17,7 +17,8 @@
      v0.6.1: แก้คำสะกด "เมนู" · เปลี่ยนชื่อหัวข้อ "คำญี่ปุ่นชี้ชัด" → "คำศัพท์ญี่ปุ่นน่ารู้"
            · แท็บโหมดเกม D1-D10 แสดงชื่อวัน Mon–Sun (สองบรรทัดในปุ่มเดิม)
      v0.6.2: ตารางคำศัพท์แบ่ง 3 คอลัมน์เท่ากัน + เพิ่ม 7 ประโยค (หลงทาง/ปวดหัว-ท้อง/เอาสุก/ลิฟท์/อร่อย/ที่จอดรถ/นับ 1-10)
-     v0.6.3: น้องเฉาก๊วยจิ๋วแมวพิกเซลเดินเล่นขอบล่างจอในโหมดเกม — ติ๊กภารกิจแล้วกระโดดดีใจ · ยศเลื่อนได้ของสะสมตามลำดับ ⭐ดาว (Lv2) → 👑มงกุฎ (Lv3) → 🧣ผ้าคลุม (Lv4) → ✨ออร่า (Lv5) -->
+     v0.6.3: น้องเฉาก๊วยจิ๋วแมวพิกเซลเดินเล่นขอบล่างจอในโหมดเกม — ติ๊กภารกิจแล้วกระโดดดีใจ · ยศเลื่อนได้ของสะสมตามลำดับ ⭐ดาว (Lv2) → 👑มงกุฎ (Lv3) → 🧣ผ้าคลุม (Lv4) → ✨ออร่า (Lv5)
+     v0.6.4: วาดน้องเฉาก๊วยใหม่ (หน้าปก + HUD เกม) — หูปุ่มสมมาตรมน้ามในหูชมพู หน้าย้ายกลางหัว เพิ่มกระดิ่ง+สายใน HUD -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#e8485f">
 <meta name="mobile-web-app-capable" content="yes">
@@ -589,24 +590,25 @@ button{font:inherit; color:inherit}
     <p class="logo-sub">สมุดเกมเที่ยวญี่ปุ่นของครอบครัวเรา · ขบวนนำโดยน้องเฉาก๊วย 🐈‍⬛</p>
 
     <svg class="cover-cat" viewBox="0 0 240 210" role="img" aria-label="น้องเฉาก๊วย แมวดำนำทาง">
-      <path class="tail" d="M178 168 C215 160 222 118 200 102" fill="none" stroke="#2b2b33" stroke-width="16" stroke-linecap="round"/>
-      <ellipse cx="118" cy="152" rx="66" ry="50" fill="#2b2b33"/>
-      <circle cx="96" cy="88" r="46" fill="#2b2b33"/>
-      <path d="M58 62 L64 18 L96 50 Z" fill="#2b2b33"/>
-      <path d="M118 46 L138 12 L148 58 Z" fill="#2b2b33"/>
-      <path d="M68 52 L71 30 L88 48 Z" fill="#e8a0a8" opacity=".85"/>
-      <path d="M124 42 L136 24 L139 50 Z" fill="#e8a0a8" opacity=".85"/>
-      <path d="M72 84 q8 -10 16 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <path d="M108 84 q8 -10 16 0" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>
-      <ellipse cx="68" cy="101" rx="8" ry="5" fill="#e88490" opacity=".55"/>
-      <ellipse cx="124" cy="101" rx="8" ry="5" fill="#e88490" opacity=".55"/>
-      <path d="M89 101 q5 6 10 0 q5 6 10 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M40 86 h20 M42 98 l19 4 M134 90 h22 M135 100 l21 2" stroke="#fff" stroke-width="2.5" opacity=".8"/>
-      <rect x="64" y="121" width="66" height="12" rx="6" fill="#e8485f"/>
-      <circle cx="97" cy="141" r="8.5" fill="#f2c230" stroke="#2b2b33" stroke-width="3"/>
-      <ellipse cx="86" cy="196" rx="16" ry="9" fill="#2b2b33"/>
-      <ellipse cx="132" cy="196" rx="16" ry="9" fill="#2b2b33"/>
-      <path d="M80 192 v7 M92 192 v7 M126 192 v7 M138 192 v7" stroke="#4a4a55" stroke-width="2"/>
+      <path class="tail" d="M170 172 C212 166 220 120 196 104" fill="none" stroke="#2b2b33" stroke-width="16" stroke-linecap="round"/>
+      <path d="M84 60 L96 16 L116 46 Z" fill="#2b2b33" stroke="#2b2b33" stroke-width="10" stroke-linejoin="round"/>
+      <path d="M156 60 L144 16 L124 46 Z" fill="#2b2b33" stroke="#2b2b33" stroke-width="10" stroke-linejoin="round"/>
+      <path d="M92 42 L97 24 L105 40 Z" fill="#e8a0a8" stroke="#e8a0a8" stroke-width="6" stroke-linejoin="round"/>
+      <path d="M148 42 L143 24 L135 40 Z" fill="#e8a0a8" stroke="#e8a0a8" stroke-width="6" stroke-linejoin="round"/>
+      <ellipse cx="120" cy="160" rx="56" ry="44" fill="#2b2b33"/>
+      <ellipse cx="100" cy="198" rx="15" ry="9" fill="#2b2b33"/>
+      <ellipse cx="140" cy="198" rx="15" ry="9" fill="#2b2b33"/>
+      <path d="M94 194 v7 M106 194 v7 M134 194 v7 M146 194 v7" stroke="#4a4a55" stroke-width="2"/>
+      <circle cx="120" cy="84" r="50" fill="#2b2b33"/>
+      <path d="M92 86 q8 -10 16 0" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <path d="M132 86 q8 -10 16 0" stroke="#fff" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="84" cy="102" rx="8" ry="5" fill="#e88490" opacity=".55"/>
+      <ellipse cx="156" cy="102" rx="8" ry="5" fill="#e88490" opacity=".55"/>
+      <path d="M115 98 q5 6 10 0 q5 6 10 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M56 86 h24 M58 98 l22 4 M184 86 h-24 M182 98 l-22 4" stroke="#fff" stroke-width="2.5" opacity=".8"/>
+      <rect x="87" y="122" width="66" height="12" rx="6" fill="#e8485f"/>
+      <circle cx="120" cy="142" r="9" fill="#f2c230" stroke="#2b2b33" stroke-width="3"/>
+      <path d="M120 138 v5" stroke="#2b2b33" stroke-width="2.5" stroke-linecap="round"/>
     </svg>
 
     <div class="stat-chips">
@@ -645,12 +647,18 @@ button{font:inherit; color:inherit}
   <canvas id="chaoPix" aria-hidden="true"></canvas>
   <header id="hud">
     <svg class="hud-cat" viewBox="0 0 64 58" aria-hidden="true">
-      <path d="M12 28 L16 4 L32 20 Z" fill="#2b2b33"/>
-      <path d="M40 18 L52 2 L58 26 Z" fill="#2b2b33"/>
-      <circle cx="32" cy="36" r="22" fill="#2b2b33"/>
-      <path d="M22 34 q5 -7 10 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <path d="M34 34 q5 -7 10 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <rect x="18" y="47" width="28" height="6" rx="3" fill="#e8485f"/>
+      <path d="M16 26 L24 6 L34 18 Z" fill="#2b2b33" stroke="#2b2b33" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M48 26 L40 6 L30 18 Z" fill="#2b2b33" stroke="#2b2b33" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M20 22 L24 10 L30 18 Z" fill="#e8a0a8" stroke="#e8a0a8" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M44 22 L40 10 L34 18 Z" fill="#e8a0a8" stroke="#e8a0a8" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="32" cy="34" r="19" fill="#2b2b33"/>
+      <path d="M22 32 q4 -5 8 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <path d="M34 32 q4 -5 8 0" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <ellipse cx="17" cy="37" rx="3" ry="2" fill="#e88490" opacity=".6"/>
+      <ellipse cx="47" cy="37" rx="3" ry="2" fill="#e88490" opacity=".6"/>
+      <path d="M29 38 q3 3 6 0" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <rect x="21" y="48" width="22" height="6" rx="3" fill="#e8485f"/>
+      <circle cx="32" cy="54.5" r="2.5" fill="#f2c230" stroke="#2b2b33" stroke-width="1.5"/>
       <title>น้องเฉาก๊วย ผู้นำทาง</title>
     </svg>
     <div class="rank-badge" id="lvBadge">Lv1</div>
