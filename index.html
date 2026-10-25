@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.6.2)</title>
+<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.6.3)</title>
 <!-- 004-arcade-stage · v0.5 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
      โครงมาจาก mockup 002 (สมุดแท็บรายวัน) + ชุดเกม: HUD ยศ/XP · ปุ่มอาร์เคดขอบหนา · แมวนำทาง "น้องเฉาก๊วย"
      v0.3: ข้อมูล sync v4.1 + รหัสจองเข้ารหัสลับ AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
@@ -16,7 +16,8 @@
            (manifest.json + icon 192/512 · เปิดซ้ำไม่ต้องมีเน็ต นอกจากโหลดรูปใบจองครั้งแรก)
      v0.6.1: แก้คำสะกด "เมนู" · เปลี่ยนชื่อหัวข้อ "คำญี่ปุ่นชี้ชัด" → "คำศัพท์ญี่ปุ่นน่ารู้"
            · แท็บโหมดเกม D1-D10 แสดงชื่อวัน Mon–Sun (สองบรรทัดในปุ่มเดิม)
-     v0.6.2: ตารางคำศัพท์แบ่ง 3 คอลัมน์เท่ากัน + เพิ่ม 7 ประโยค (หลงทาง/ปวดหัว-ท้อง/เอาสุก/ลิฟท์/อร่อย/ที่จอดรถ/นับ 1-10) -->
+     v0.6.2: ตารางคำศัพท์แบ่ง 3 คอลัมน์เท่ากัน + เพิ่ม 7 ประโยค (หลงทาง/ปวดหัว-ท้อง/เอาสุก/ลิฟท์/อร่อย/ที่จอดรถ/นับ 1-10)
+     v0.6.3: น้องเฉาก๊วยจิ๋วแมวพิกเซลเดินเล่นขอบล่างจอในโหมดเกม — ติ๊กภารกิจแล้วกระโดดดีใจ · ยศเลื่อนได้ของสะสมตามลำดับ ⭐ดาว (Lv2) → 👑มงกุฎ (Lv3) → 🧣ผ้าคลุม (Lv4) → ✨ออร่า (Lv5) -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#e8485f">
 <meta name="mobile-web-app-capable" content="yes">
@@ -432,6 +433,11 @@ button{font:inherit; color:inherit}
 .phr .th{font-weight:600}
 .phr .jp{font-family:var(--jp); font-weight:600}
 .phr .rd{color:var(--ink-soft)}
+
+/* ---------- น้องเฉาก๊วยจิ๋ว (แมวพิกเซลเดินเล่นในโหมดเกม) ---------- */
+#chaoPix{position:fixed; left:0; right:0; bottom:0; width:100%; height:100px; z-index:140; pointer-events:none; display:none}
+#game:not([hidden]) #chaoPix{display:block}
+@media (prefers-reduced-motion:reduce){ #chaoPix{display:none} }
 .facts{font-size:13px; line-height:1.8}
 
 /* ---------- เมนูยักษ์ 4 ปุ่ม (v0.5) ---------- */
@@ -636,6 +642,7 @@ button{font:inherit; color:inherit}
 
 <!-- ============ จอเกม ============ -->
 <section id="game" hidden>
+  <canvas id="chaoPix" aria-hidden="true"></canvas>
   <header id="hud">
     <svg class="hud-cat" viewBox="0 0 64 58" aria-hidden="true">
       <path d="M12 28 L16 4 L32 20 Z" fill="#2b2b33"/>
@@ -1210,12 +1217,13 @@ function onCheck(d, q, val){
       comboTimer = setTimeout(()=> combo.classList.remove('show'), 2800);
     }
   }
+  if(val) chaoCheer();
   renderHUD(); updateDayStatus(); markTabs();
   const full = dayFull(DAYS[d-1]);
   if(full && !DAYS[d-1]._cheered){ DAYS[d-1]._cheered = true; showToast('✨ ครบวันนี้แล้ว! โบนัส +50 XP'); }
   if(!full) DAYS[d-1]._cheered = false;
   const nowRank = rankIdx(totalXP());
-  if(nowRank > prevRank) showToast('🎉 ยศเลื่อน! ' + RANKS[nowRank].name);
+  if(nowRank > prevRank){ showToast('🎉 ยศเลื่อน! ' + RANKS[nowRank].name); chaoLevelUp(); }
 }
 
 /* ===== toast ===== */
@@ -1225,6 +1233,117 @@ function showToast(msg){
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=> toast.classList.remove('show'), 2600);
 }
+
+/* ===== น้องเฉาก๊วยจิ๋ว — แมวพิกเซลเดินเล่นขอบล่างจอ (โหมดเกม) v0.6.3 ===== */
+const chaoPix = $('chaoPix'), chaoCtx = chaoPix ? chaoPix.getContext('2d') : null;
+const CHAO_GY = 90;
+const CHAO_CONFETTI = ['#f0a12e','#e8485f','#7ac0ff','#8fd672','#e8a0a8'];
+const chao = {x:70, dir:1, mode:'walk', t:1200, legT:0, tailT:0, blinkT:0, jumpT:-1, jumpD:0.9, party:0, parts:[], raf:null, last:0};
+function chaoResize(){
+  if(!chaoPix) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  chaoPix.width = innerWidth*dpr; chaoPix.height = 100*dpr;
+  chaoCtx.setTransform(dpr,0,0,dpr,0,0); chaoCtx.imageSmoothingEnabled = false;
+}
+addEventListener('resize', chaoResize);
+function chaoGear(){ const r = rankIdx(totalXP()); return {star:r>=1, crown:r>=2, cape:r>=3, aura:r>=4}; }
+function chaoBurst(n){
+  for(let i=0;i<n;i++){
+    const a = Math.random()*Math.PI*2, sp = 0.8+Math.random()*2.2;
+    chao.parts.push({x:chao.x+(Math.random()*36-18), y:CHAO_GY-30-Math.random()*14, vx:Math.cos(a)*sp, vy:-1-Math.random()*2.4, life:1, c:CHAO_CONFETTI[i%CHAO_CONFETTI.length]});
+  }
+}
+function chaoCheer(){ if(chao.jumpT<0){ chao.jumpT=0; chao.jumpD=0.9; chaoBurst(8); } }
+function chaoLevelUp(){ chao.jumpT=0; chao.jumpD=1.1; chao.party=1.8; chaoBurst(26); }
+function chaoStar(c,px,py,u,col){ c.fillStyle=col; c.fillRect(px+u,py,u,u); c.fillRect(px+3*u,py,u,u); c.fillRect(px,py+u,5*u,u); c.fillRect(px+u,py+2*u,3*u,u); c.fillRect(px+2*u,py+3*u,u,u); }
+function chaoTick(now){
+  if(game.hidden || !chaoCtx){ chao.raf=null; return; }
+  if(!chao.last) chao.last = now;
+  const dt = Math.min(50, now-chao.last); chao.last = now;
+  chao.tailT += dt; chao.legT += dt;
+  if(chao.blinkT > 0) chao.blinkT -= dt; else if(Math.random() < 0.004) chao.blinkT = 140;
+  if(chao.party > 0){ chao.party -= dt/1000; if(Math.random()<0.12) chaoBurst(1); }
+  if(chao.jumpT >= 0){
+    chao.jumpT += dt/1000;
+    if(chao.jumpT >= chao.jumpD){ chao.jumpT = -1; chao.mode='idle'; chao.t = 600+Math.random()*1200; }
+  }else if(chao.mode === 'walk'){
+    chao.x += chao.dir*0.05*dt;
+    if(chao.x > innerWidth-56) chao.dir = -1;
+    if(chao.x < 56) chao.dir = 1;
+    chao.t -= dt;
+    if(chao.t <= 0){ chao.mode='idle'; chao.t = 900+Math.random()*2300; }
+  }else{
+    chao.t -= dt;
+    if(chao.t <= 0){ chao.mode='walk'; chao.t = 2200+Math.random()*3200; if(Math.random()<0.5) chao.dir *= -1; }
+  }
+  /* --- วาด --- */
+  const c = chaoCtx, u = 3, K = '#2b2b33';
+  c.clearRect(0,0,innerWidth,100);
+  chao.parts = chao.parts.filter(p=>p.life>0);
+  for(const p of chao.parts){
+    p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= 0.02;
+    c.globalAlpha = Math.max(0, Math.min(1, p.life)); c.fillStyle = p.c;
+    c.fillRect(Math.round(p.x), Math.round(p.y), u, u);
+  }
+  c.globalAlpha = 1;
+  const g = chaoGear();
+  let jy = 0;
+  if(chao.jumpT >= 0) jy = -34*Math.sin(Math.PI*Math.min(1, chao.jumpT/chao.jumpD));
+  const walking = chao.mode==='walk' && chao.jumpT<0;
+  const wp = walking ? Math.round(Math.sin(chao.legT*0.02)) : 0;
+  const tw = Math.round(Math.sin(chao.tailT*0.004));
+  c.save(); c.translate(Math.round(chao.x), CHAO_GY + Math.round(jy)); if(chao.dir<0) c.scale(-1,1);
+  if(g.cape){ /* ผ้าคลุม (อยู่หลังตัว) */
+    c.fillStyle = '#e8485f';
+    c.fillRect(-13*u, -15*u, 7*u, 13*u);
+    c.fillRect(-14*u + tw*u, -4*u, 9*u, 3*u);
+    c.fillStyle = '#f2c230'; c.fillRect(-13*u, -15*u, 7*u, u);
+  }
+  c.fillStyle = K;                                     /* หาง */
+  c.fillRect((-8+tw)*u, -11*u, 2*u, 2*u);
+  c.fillRect((-7+tw)*u, -9*u, 2*u, 3*u);
+  c.fillRect((-4+wp)*u, -2*u, 3*u, 2*u);               /* เท้า */
+  c.fillRect((1-wp)*u, -2*u, 3*u, 2*u);
+  c.fillRect(-5*u, -10*u, 10*u, 8*u);                  /* ตัว */
+  c.fillRect(-4*u, -18*u, 12*u, 9*u);                  /* หัว */
+  c.fillRect(-3*u, -20*u, 2*u, 3*u);                   /* หู */
+  c.fillRect(6*u, -20*u, 2*u, 3*u);
+  c.fillStyle = '#e8a0a8';
+  c.fillRect(-2*u, -19*u, 1*u, 2*u);                   /* ในหู */
+  c.fillRect(7*u, -19*u, 1*u, 2*u);
+  c.fillStyle = '#fffdf6'; c.fillRect(-1*u, -7*u, 4*u, 4*u); /* ท้อง */
+  c.fillStyle = '#fffdf6';
+  if(chao.blinkT > 0){ c.fillRect(2*u,-14*u,2*u,u); c.fillRect(6*u,-14*u,2*u,u); }
+  else{ c.fillRect(2*u,-16*u,2*u,3*u); c.fillRect(6*u,-16*u,2*u,3*u); }
+  c.fillStyle = K;
+  if(chao.blinkT <= 0){ c.fillRect(3*u,-15*u,u,2*u); c.fillRect(7*u,-15*u,u,2*u); }
+  c.fillStyle = '#e8a0a8'; c.fillRect(4*u,-12*u,u,u);  /* จมูก */
+  c.fillStyle = '#f0a12e'; c.fillRect(2*u,-10*u,2*u,2*u); /* กระดิ่ง */
+  c.fillStyle = K; c.fillRect(2*u,-9*u,2*u,u);
+  if(g.crown){                                         /* มงกุฎ */
+    c.fillStyle = '#f2c230';
+    c.fillRect(-2*u, -22*u, 9*u, 2*u);
+    c.fillRect(-2*u, -24*u, u, 2*u); c.fillRect(u, -25*u, u, 3*u); c.fillRect(4*u, -24*u, u, 2*u);
+    c.fillStyle = '#e8485f'; c.fillRect(2*u, -21*u, u, u);
+  }
+  if(g.star){ chaoStar(c, -13*u, (-22+Math.round(Math.sin(now*0.004)))*u, u, '#f2c230'); }
+  if(g.aura){
+    for(let i=0;i<3;i++){
+      const a = now*0.003 + i*2.09;
+      c.fillStyle = i%2 ? '#f2c230' : '#e8a0a8';
+      c.fillRect(Math.round(Math.cos(a)*16), -12*u + Math.round(Math.sin(a)*10), u, u);
+    }
+  }
+  c.restore();
+  chao.raf = requestAnimationFrame(chaoTick);
+}
+function chaoStart(){
+  if(chao.raf || !chaoPix) return;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  chaoResize(); chao.last = 0; chao.raf = requestAnimationFrame(chaoTick);
+}
+new MutationObserver(()=>{ if(game.hidden){ if(chao.raf){ cancelAnimationFrame(chao.raf); chao.raf = null; } } else chaoStart(); }).observe(game, {attributes:true, attributeFilter:['hidden']});
+window.__chaoState = () => ({mode: chao.jumpT>=0 ? 'cheer' : chao.mode, gear: chaoGear()});
 
 /* ===== ปลดล็อก / ปิดหน้ารหัสลับ ===== */
 function openUnlock(){

@@ -67,10 +67,12 @@ with sync_playwright() as p:
     ok('กด D7 → ป้ายปัจจุบันเลื่อน', 'cur' in (pg.get_attribute('#jumpbar .jb[data-n="7"]', 'class') or ''))
     pg.click('#toGameBtn'); pg.wait_for_timeout(300)
     ok('ปุ่ม 🎮 → โหมดเกม', pg.is_visible('#game'))
+    ok('แมวจิ๋ว: แคนวาสโชว์ในโหมดเกม', pg.is_visible('#chaoPix'))
     ok('เกม: HUD + แท็บวัน 10', pg.is_visible('#hud') and pg.locator('.tab').count() == 10)
     before = pg.text_content('#xpText')
     pg.locator('.quest input').first.click(); pg.wait_for_timeout(300)
     ok('ติ๊กภารกิจ → XP เปลี่ยน', pg.text_content('#xpText') != before, before + '→' + (pg.text_content('#xpText') or ''))
+    ok('แมวจิ๋ว: ติ๊กแล้วกระโดดดีใจ', pg.evaluate("window.__chaoState ? window.__chaoState().mode : 'x'") == 'cheer')
     pg.click('#homeB'); pg.wait_for_timeout(300)
     ok('ในเกมกด 🏛 เมนู → กลับเมนูยักษ์', pg.is_visible('#menu'))
 
