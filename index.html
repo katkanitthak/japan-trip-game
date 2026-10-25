@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.5)</title>
+<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.6)</title>
 <!-- 004-arcade-stage · v0.5 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
      โครงมาจาก mockup 002 (สมุดแท็บรายวัน) + ชุดเกม: HUD ยศ/XP · ปุ่มอาร์เคดขอบหนา · แมวนำทาง "น้องเฉาก๊วย"
      v0.3: ข้อมูล sync v4.1 + รหัสจองเข้ารหัสลับ AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
@@ -11,7 +11,16 @@
      v0.5: หลังปลดล็อก = เมนูยักษ์ 4 ปุ่ม — A แผนทริป 10 วัน (ชิปรหัสจองกด→รูปใบจองจริง)
            · B โหมดเกม · C ญี่ปุ่นไม่งง + เช็คลิสต์ · D เอกสารสำคัญ (รูปใบจองแยกหมวด)
            รูปใบจอง 26 ภาพเข้ารหัส AES ฝังใน docs-pack.enc (แยกไฟล์ โหลดหลังปลดล็อก)
-     ฟอนต์ CDN ได้เฉพาะ mockup (แอปจริงห้าม CDN — ต้องฝัง base64 ตอนยกไปใช้) -->
+     ฟอนต์ CDN ได้เฉพาะ mockup (แอปจริงห้าม CDN — ต้องฝัง base64 ตอนยกไปใช้)
+     v0.6: เล่นออฟไลน์ได้ — sw.js เก็บหน้าเว็บ+ฟอนต์ลงเครื่องตั้งแต่เปิดครั้งแรก
+           (manifest.json + icon 192/512 · เปิดซ้ำไม่ต้องมีเน็ต นอกจากโหลดรูปใบจองครั้งแรก) -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#e8485f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Itim&family=IBM+Plex+Sans+Thai+Looped:wght@400;500;600&display=swap" rel="stylesheet">
@@ -616,7 +625,7 @@ button{font:inherit; color:inherit}
       <span class="ql-step"><span class="n">1</span>กดค้างที่ไฟล์ในแชท แล้วเลือก “แชร์”</span>
       <span class="ql-step"><span class="n">2</span>เลือกเปิดด้วย Safari หรือ Chrome — เกมจะขึ้นเองทันที</span>
     </div>
-    <p class="cover-foot">เกม v0.5 · ข้อมูล Japan Trip Kit v4.1 · รหัสจอง + รูปใบจองเข้ารหัสลับ AES 🔐 · <button id="resetB">รีเซ็ตความคืบหน้าเกม</button></p>
+    <p class="cover-foot">เกม v0.6 · ข้อมูล Japan Trip Kit v4.1 · รหัสจอง + รูปใบจองเข้ารหัสลับ AES 🔐 · <button id="resetB">รีเซ็ตความคืบหน้าเกม</button></p>
   </div>
 </section>
 
@@ -1559,6 +1568,12 @@ $('qlHelp').hidden = true;
   $('stayBtn').addEventListener('click', function(){ $('bouncer').hidden = true; });
   $('bouncer').hidden = false;           /* กดยักษ์ปุ่มเดียว จบ — ไม่ต้องเลือกเอง */
 })();
+
+/* ===== เล่นออฟไลน์ได้ (v0.6): ลง Service Worker ครั้งแรกที่เปิดแบบมีเน็ต ===== */
+if (navigator.serviceWorker && /^(https|http):$/.test(location.protocol)) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
 </script>
 </body>
 </html>
