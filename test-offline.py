@@ -49,11 +49,11 @@ with sync_playwright() as p:
     ctx.set_offline(True)
     pg.reload(wait_until='load')
     ok('ออฟไลน์: รีเฟรชหน้าปกได้', pg.is_visible('#startBtn') or pg.is_visible('#menu'))
-    # localStorage ยังจำว่าปลดล็อกแล้ว → ควรตรงเมนุ
+    # localStorage ยังจำว่าปลดล็อกแล้ว → ควรตรงเมนู
     menu_or_cover = pg.evaluate("() => !!document.querySelector('#startBtn') || !document.querySelector('#menu').hidden")
     if pg.is_visible('#startBtn'):
         pg.click('#startBtn'); pg.wait_for_timeout(300)
-    ok('ออฟไลน์: เข้าเมนุยักษ์ได้ (รหัสไม่ถามใหม่)', pg.is_visible('#menu'))
+    ok('ออฟไลน์: เข้าเมนูยักษ์ได้ (รหัสไม่ถามใหม่)', pg.is_visible('#menu'))
     pg.click('#tileA'); pg.wait_for_timeout(500)
     ok('ออฟไลน์: หน้าแผน 10 วันครบ', pg.locator('.daycard').count() == 10)
     ok('ออฟไลน์: ตารางเวลา 65 แถว', pg.locator('.tl-row').count() == 65)
