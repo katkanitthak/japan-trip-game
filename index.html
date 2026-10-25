@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.6)</title>
+<title>เกมสมุดแท็บทริปญี่ปุ่น 2026 · น้องเฉาก๊วย (v0.6.1)</title>
 <!-- 004-arcade-stage · v0.5 · ข้อมูลทริปจริง 26 ต.ค.–4 พ.ย. 2026 จาก japan-trip-kit v4.1
      โครงมาจาก mockup 002 (สมุดแท็บรายวัน) + ชุดเกม: HUD ยศ/XP · ปุ่มอาร์เคดขอบหนา · แมวนำทาง "น้องเฉาก๊วย"
      v0.3: ข้อมูล sync v4.1 + รหัสจองเข้ารหัสลับ AES-GCM (PBKDF2 400k) ปลดล็อกด้วยรหัสลับครอบครัว
@@ -13,7 +13,9 @@
            รูปใบจอง 26 ภาพเข้ารหัส AES ฝังใน docs-pack.enc (แยกไฟล์ โหลดหลังปลดล็อก)
      ฟอนต์ CDN ได้เฉพาะ mockup (แอปจริงห้าม CDN — ต้องฝัง base64 ตอนยกไปใช้)
      v0.6: เล่นออฟไลน์ได้ — sw.js เก็บหน้าเว็บ+ฟอนต์ลงเครื่องตั้งแต่เปิดครั้งแรก
-           (manifest.json + icon 192/512 · เปิดซ้ำไม่ต้องมีเน็ต นอกจากโหลดรูปใบจองครั้งแรก) -->
+           (manifest.json + icon 192/512 · เปิดซ้ำไม่ต้องมีเน็ต นอกจากโหลดรูปใบจองครั้งแรก)
+     v0.6.1: แก้คำสะกด "เมนู" · เปลี่ยนชื่อหัวข้อ "คำญี่ปุ่นชี้ชัด" → "คำศัพท์ญี่ปุ่นน่ารู้"
+           · แท็บโหมดเกม D1-D10 แสดงชื่อวัน Mon–Sun (สองบรรทัดในปุ่มเดิม) -->
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#e8485f">
 <meta name="mobile-web-app-capable" content="yes">
@@ -162,6 +164,8 @@ button{font:inherit; color:inherit}
 }
 .tab .n{font-size:20px; line-height:1}
 .tab .city{font-size:11.5px; font-weight:600; line-height:1.2}
+.tab .day{display:flex; flex-direction:column; align-items:center; line-height:1.15}
+.tab .wd{font-size:10.5px; font-weight:700; opacity:.85; letter-spacing:.4px}
 .tab[aria-current="true"]{transform:translateY(-6px); box-shadow:4px 6px 0 rgba(43,43,51,.92)}
 .tab.done::after{
   content:'✓'; position:absolute; top:-8px; right:-6px; width:23px; height:23px;
@@ -663,7 +667,7 @@ button{font:inherit; color:inherit}
     <h2>📖 แผนทั้งทริป 10 วัน</h2>
     <p id="homeSub">สรุปเรียงวัน — อ่านเฉย ๆ ไม่ต้องติ๊กภารกิจ</p>
     <div class="btnrow">
-      <button id="toMenuBtn" type="button">🏛 กลับเมนุ</button>
+      <button id="toMenuBtn" type="button">🏛 กลับเมนู</button>
       <button id="toGameBtn" type="button">🎮 เข้าโหมดเกม เก็บ XP</button>
     </div>
   </div>
@@ -678,7 +682,7 @@ button{font:inherit; color:inherit}
     <div class="menu-tiles">
       <button class="mtile a" id="tileA" type="button"><span class="ic">📖</span><span><b>A · ดูแผนทริป 10 วัน</b><span>อ่านเรียงวัน D1–D10 · กดรหัสจองแล้วดูรูปใบจองจริง</span></span></button>
       <button class="mtile b" id="tileB" type="button"><span class="ic">🎮</span><span><b>B · เข้าโหมดเล่นเกม</b><span>ติ๊กภารกิจ เก็บ XP เลื่อนยศ 🏅</span></span></button>
-      <button class="mtile c" id="tileC" type="button"><span class="ic">🇯🇵</span><span><b>C · ญี่ปุ่นไม่งง</b><span>อากาศ · เงิน · คำญี่ปุ่นชี้ชัด</span></span></button>
+      <button class="mtile c" id="tileC" type="button"><span class="ic">🇯🇵</span><span><b>C · ญี่ปุ่นไม่งง</b><span>อากาศ · เงิน · คำศัพท์ญี่ปุ่นน่ารู้</span></span></button>
       <button class="mtile d" id="tileD" type="button"><span class="ic">🗂</span><span><b>D · เอกสารสำคัญ</b><span>รูปใบจองจริง — ที่พัก · รถไฟ · เครื่องบิน · รถ</span></span></button>
       <button class="mtile wide" id="tileP" type="button"><span class="ic">🎒</span><span><b>ห้ามลืมก่อนบิน — เช็คลิสต์</b><span>พาสปอร์ต · IDP · เสื้อกันหนาว · ปลั๊กญี่ปุ่น</span></span></button>
     </div>
@@ -690,7 +694,7 @@ button{font:inherit; color:inherit}
   <div class="home-head">
     <h2>🇯🇵 ญี่ปุ่นไม่งง เรื่องต้องรู้</h2>
     <p>ของที่ควรรู้ติดกระเป๋า — อ่านเดี๋ยวเดียวจบ</p>
-    <div class="btnrow"><button id="secMenuBtn" type="button">🏛 กลับเมนุ</button></div>
+    <div class="btnrow"><button id="secMenuBtn" type="button">🏛 กลับเมนู</button></div>
   </div>
   <div id="knowInner"></div>
 </section>
@@ -700,7 +704,7 @@ button{font:inherit; color:inherit}
   <div class="home-head">
     <h2>🎒 ห้ามลืมก่อนบิน</h2>
     <p>เช็คลิสต์ก่อนเดินทาง — น้องเฉาก๊วยจัดมาให้ 🐈‍⬛</p>
-    <div class="btnrow"><button id="packMenuBtn" type="button">🏛 กลับเมนุ</button></div>
+    <div class="btnrow"><button id="packMenuBtn" type="button">🏛 กลับเมนู</button></div>
   </div>
   <div id="packInner"></div>
 </section>
@@ -710,7 +714,7 @@ button{font:inherit; color:inherit}
   <div class="home-head">
     <h2>🗂 เอกสารสำคัญ — ใบจองจริงทั้งหมด</h2>
     <p>กดการ์ดแล้วดูรูปใบจองต้นฉบับได้เลย</p>
-    <div class="btnrow"><button id="docsMenuBtn" type="button">🏛 กลับเมนุ</button></div>
+    <div class="btnrow"><button id="docsMenuBtn" type="button">🏛 กลับเมนู</button></div>
   </div>
   <div id="docsInner"></div>
 </section>
@@ -762,6 +766,8 @@ const CITIES = {
   kusatsu: {c:'#8b6ad6', on:'#fff', tint:'rgba(139,106,214,.11)'},
   nikko:   {c:'#ef7b2f', on:'#2b2b33', tint:'rgba(239,123,47,.13)'}
 };
+/* ชื่อวันของแต่ละวันทริป (26 ต.ค. 2026 = วันจันทร์) — โชว์ใต้เลขแท็บ D1-D10 ในโหมดเกม */
+const WD_EN = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun','Mon','Tue','Wed'];
 const DAYS = [
   {n:1, tab:'โตเกียว', city:'โตเกียว', col:'tokyo',
    sub:'จ. 26 ต.ค. · กรุงเทพฯ ➔ อูเอโนะ (บิน NH806 + รถตู้รับส่วนตัว)',
@@ -938,7 +944,7 @@ const PACK = [
   {t:'🚿 ของใช้ส่วนตัวในห้องน้ำ — โรงแรมบางที่ให้เบาบาง'},
   {t:'👓 แว่นตา/คอนแทกเลนส์ + แว่นกันแดด'}
 ];
-/* ===== คำญี่ปุ่นชี้ชัด (ชี้ประโยคญี่ปุ่นให้คนญี่ปุ่นอ่าน) ===== */
+/* ===== คำศัพท์ญี่ปุ่นน่ารู้ (ชี้ประโยคญี่ปุ่นให้คนญี่ปุ่นอ่าน) ===== */
 const PHR = [
   ['สวัสดี','こんにちは','คอนนิจิวะ'],
   ['ขอบคุณมาก','ありがとうございます','อาริกาโตโกซาอิมาสุ'],
@@ -1109,7 +1115,7 @@ function buildTabs(){
     const b = document.createElement('button');
     b.className = 'tab'; b.dataset.n = d.n;
     b.style.setProperty('--c', col.c); b.style.setProperty('--on', col.on);
-    b.innerHTML = '<span class="n">' + d.n + '</span><span class="city">' + d.tab + '</span>';
+    b.innerHTML = '<span class="day"><span class="n">D' + d.n + '</span><span class="wd">' + WD_EN[d.n-1] + '</span></span><span class="city">' + d.tab + '</span>';
     b.setAttribute('role','tab');
     b.addEventListener('click', ()=> setDay(d.n));
     tabsEl.appendChild(b);
@@ -1157,7 +1163,7 @@ function renderDay(){
     '</div>' +
     '<div class="day-nav">' +
       '<button class="chunk" id="prevB"'+(d.n===1?' disabled':'')+'>◀ วันก่อนหน้า</button>' +
-      '<button class="chunk home" id="homeB">🏛 เมนุ</button>' +
+      '<button class="chunk home" id="homeB">🏛 เมนู</button>' +
       '<button class="chunk" id="nextB"'+(d.n===10?' disabled':'')+'>วันถัดไป ▶</button>' +
     '</div>';
   updateDayStatus();
@@ -1269,7 +1275,7 @@ function buildJumpbar(){
     jumpbar.appendChild(b);
     return b;
   };
-  add('🏛 เมนุ', 'mode', ()=> enterMenu());
+  add('🏛 เมนู', 'mode', ()=> enterMenu());
   DAYS.forEach(d=>{
     const col = CITIES[d.col];
     const btn = add('D' + d.n, null, ()=> gotoDay(d.n), d.n);
@@ -1325,7 +1331,7 @@ function renderKnow(){
           '<div class="rate-rule">เห็นราคาเยน ➔ หาร 5 = เงินไทย</div>' +
           '<span id="homeRate">อัตราค่าฝังไฟล์: 100¥ ≈ ฿21.25 — มีเน็ตจะดึงอัตราสดให้เอง</span>' +
           '<p class="note">1,000¥ ≈ ฿200 · 5,000¥ ≈ ฿1,000 · 10,000¥ ≈ ฿2,000 (ได้น้อยกว่าจริงนิดหน่อย = กันเผื่อ ไม่ตกใช้)</p></div>' +
-        '<div class="know-block wide"><h4>🗣 คำญี่ปุ่นชี้ชัด</h4>' +
+        '<div class="know-block wide"><h4>🗣 คำศัพท์ญี่ปุ่นน่ารู้</h4>' +
           '<div class="phr"><span class="h">ภาษาไทย</span><span class="h">ญี่ปุ่น (ชี้ให้เขาอ่าน)</span><span class="h">อ่านว่า</span>' +
           PHR.map(p=>'<span class="th">'+p[0]+'</span><span class="jp">'+p[1]+'</span><span class="rd">'+p[2]+'</span>').join('') +
           '</div><p class="note">เคล็ด: ชี้ประโยคภาษาญี่ปุ่นให้คนญี่ปุ่นอ่านตรง ๆ ง่ายสุด</p></div>' +
@@ -1350,7 +1356,7 @@ function gotoDay(n){
   [...jumpbar.querySelectorAll('.jb')].forEach(b=> b.classList.toggle('cur', +b.dataset.n === n));
 }
 
-/* ===== ตัวจัดการหน้าทั้งหมด (v0.5): ปก → เมนุยักษ์ → A/B/C/🎒/D ===== */
+/* ===== ตัวจัดการหน้าทั้งหมด (v0.5): ปก → เมนูยักษ์ → A/B/C/🎒/D ===== */
 const menuEl = $('menu'), knowEl = $('know'), knowInner = $('knowInner');
 const packEl = $('pack'), packInner = $('packInner');
 const docsEl = $('docs'), docsInner = $('docsInner'), viewerEl = $('viewer');
